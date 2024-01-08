@@ -1,0 +1,57 @@
+---
+title: "Gelman and Hill Problem 4.3"
+output:
+  html_document:
+    df_print: paged
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+We have 3 fitted models:
+
+1) weight ~ age10    (age/10)
+
+  Coef       |     val    |    se
+------------ | ---------- | ---------  
+  Intercept  |    161.0   |   7.3
+  age10      |     2.6    |   1.6
+  
+  residual SE = 119.7
+  
+2) weight ~ age10 + age10.sq   (age/10)^2
+
+  Coef         |   val   |    se
+-------------- | ------- | -------  
+  Intercept    |  96.2   |     19.3
+  age10        |  33.6   |      8.7
+  age10.sq     |  -3.2   |      0.9
+  
+  residual SE = 119.3
+  
+3) weight ~ age30.44 +age45.64 + age65up    (indicators)
+
+  Coef       |     val     |      se
+------------ | ----------- | --------------  
+  Intercept  |     157.2   |      5.4
+  age30.44   |      19.1   |      7.0
+  age45.64   |      27.2   |      7.6
+  age65up    |       8.5   |      8.7
+  
+  residual SE = 119.4
+  
+ Draw lines for each graph
+ 
+```{r}
+plot(c(25,85),c(100,250),type="n",
+     xlab="Age (years)",ylab="Weight (lbs)")
+curve(161+2.6*(x/10),add=TRUE,lty=1)
+curve(96.2+33.6*(x/10)-3.2*(x/10)^2,add=TRUE,lty=2)
+curve(157.2 + 19.1*(x>=30 & x<45) + 27.2*(x>=45 & x<65) +
+        8.5*(x>=65),add=TRUE,lty=3)
+legend("topleft",legend=paste("Model",1:3),lty=1:3)
+
+```
+ 
+ 

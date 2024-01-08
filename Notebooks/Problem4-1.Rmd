@@ -1,0 +1,53 @@
+---
+title: "Gelman and Hill Exercise 4-1"
+output:
+  html_document:
+    df_print: paged
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
+-------------------------------------------------------
+Gelman and Hill Problem 4.1
+
+log(weight) = -3.5 + 2.0 log(height) + error
+sd(error) = .25
+
+a) Approximately 68% of persons have a weight within a factor of `r exp(-.25)` and `r exp(.25)` of their predicted value.
+
+```{r}
+exp(c(-.25,.25))
+```
+
+b) simulate some data and draw a regression line and scatterplot.
+```{r}
+N <- 100L
+height <- rnorm(N,66,4)
+weight <- exp(-3.5+2.0*log(height)+rnorm(N,0,.25))
+plot(height,weight,main="Log Regression, linear axis",
+     xlab="Height (inches)",ylab="Weight (lbs)")
+curve(exp(-3.5+2.0*log(x)),add=TRUE)
+
+```
+Putting the axis on the log scale using the log="xy"
+
+```{r}
+N <- 100L
+height <- rnorm(N,66,4)
+weight <- exp(-3.5+2.0*log(height)+rnorm(N,0,.25))
+plot(height,weight,log="xy",main="Log Regression, log axis",
+     xlab="Height (inches)",ylab="Weight (lbs)")
+curve(exp(-3.5+2.0*log(x)),add=TRUE)
+
+```
+

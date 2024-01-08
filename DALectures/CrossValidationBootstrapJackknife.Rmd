@@ -1,0 +1,32 @@
+# Cross Validation, Bootstrap and Jackknife
+
+# Three essential tools
+
+# Regression with a Saturated Model
+
+Imagine a regression with 100 data points and 100 _X_ variables \(or 99 and a constant\)\.
+
+Nocolinearity\.
+
+What is the residual variance? _R_  _2_  _?_
+
+Residual variance is 0\, so _R_  _2_  _=1\._
+
+_This is true even if the X variables are all random noise\._
+
+# Two solutions
+
+* Penalize _R_  _2_ for adding extra predictors \(adjusted _R_  _2_ \)
+* Set aside some data to fit the model\, some to test\.
+  * _Cross Validation_
+
+# More complicated models
+
+_E\[Y\] = f\(_  _X|_  _q_  _\)_
+
+_f\(\)_ is a black box \(e\.g\.\, neural network\, support vector machine\, Bayes net\)
+
+Find set of parameters    that minimize
+
+Model will always fit better on training data than out of training sample
+

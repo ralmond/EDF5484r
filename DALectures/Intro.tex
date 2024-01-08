@@ -1,0 +1,558 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+  ignorenonframetext,
+]{beamer}
+\usepackage{pgfpages}
+\setbeamertemplate{caption}[numbered]
+\setbeamertemplate{caption label separator}{: }
+\setbeamercolor{caption name}{fg=normal text.fg}
+\beamertemplatenavigationsymbolsempty
+% Prevent slide breaks in the middle of a paragraph
+\widowpenalties 1 10000
+\raggedbottom
+\setbeamertemplate{part page}{
+  \centering
+  \begin{beamercolorbox}[sep=16pt,center]{part title}
+    \usebeamerfont{part title}\insertpart\par
+  \end{beamercolorbox}
+}
+\setbeamertemplate{section page}{
+  \centering
+  \begin{beamercolorbox}[sep=12pt,center]{part title}
+    \usebeamerfont{section title}\insertsection\par
+  \end{beamercolorbox}
+}
+\setbeamertemplate{subsection page}{
+  \centering
+  \begin{beamercolorbox}[sep=8pt,center]{part title}
+    \usebeamerfont{subsection title}\insertsubsection\par
+  \end{beamercolorbox}
+}
+\AtBeginPart{
+  \frame{\partpage}
+}
+\AtBeginSection{
+  \ifbibliography
+  \else
+    \frame{\sectionpage}
+  \fi
+}
+\AtBeginSubsection{
+  \frame{\subsectionpage}
+}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\usetheme[]{CambridgeUS}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\newif\ifbibliography
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+\usepackage{caption}
+% Make caption package work with longtable
+\makeatletter
+\def\fnum@table{\tablename~\thetable}
+\makeatother
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\usepackage{soul}
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={EDF 5484 Educational Data Analysis},
+  pdfauthor={Russell Almond},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{EDF 5484 Educational Data Analysis}
+\author{Russell Almond}
+\date{}
+
+\begin{document}
+\frame{\titlepage}
+
+\begin{frame}{EDF 5484 Educational Data Analysis}
+\protect\hypertarget{edf-5484-educational-data-analysis}{}
+Introduction and Welcome
+\end{frame}
+
+\begin{frame}{Who am I?}
+\protect\hypertarget{who-am-i}{}
+\includegraphics[width=\textwidth,height=0.75\textheight]{img/sometimes-you-need-an-old-white-man-with-a-beard.jpg}
+Russell Almond
+\end{frame}
+
+\begin{frame}{Contact info}
+\protect\hypertarget{contact-info}{}
+\begin{itemize}
+\tightlist
+\item
+  \url{http://ralmond.net/}
+\item
+  Email: \href{mailto:ralmond@fsu.edu}{\nolinkurl{ralmond@fsu.edu}}
+\item
+  Office Hours, By appointment (appointment link:
+  \url{https://doodle.com/mm/russellalmond/book-a-time})
+\item
+  \url{https://fsu.zoom.us/my/ralmond}
+\item
+  On Campus, TTH Afternoons
+\item
+  STB 3204-J
+\item
+  Has ADHD
+\end{itemize}
+
+Questions welcome during lectures (speak up if on Zoom)
+\end{frame}
+
+\begin{frame}{Office Hours}
+\protect\hypertarget{office-hours}{}
+\begin{itemize}
+\tightlist
+\item
+  I'm replacing the formal ``office hours'' with a ``coffee hour'' and
+  ``tea time'' after my classes.
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Coffee Hour: T,Th 11:30 in my Zoom Room
+    \url{https://fsu.zoom.us/my/ralmond})
+  \item
+    Tea Time: W,F in my office 3204-J
+  \end{itemize}
+\item
+  Feel free to drop by with technical questions, or just to chat
+\item
+  Zoom and office door open (although I may be in kitchen or 3204 common
+  area).
+\item
+  Appointment link:
+  \url{https://doodle.com/mm/russellalmond/book-a-time}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Course Text}
+\protect\hypertarget{course-text}{}
+\textbf{Required:}
+
+\begin{itemize}
+\item
+  Gelman, A., Hill, J. \& Vehtari, A. (2022) \emph{Regression and Other
+  Stories}. Cambridge University Press.
+\item
+  Vehtari's course page: \url{https://avehtari.github.io/ROS-Examples/}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    R code for book examples
+  \item
+    Data for homework problems.
+  \item
+    PDF of book
+  \end{itemize}
+\end{itemize}
+
+\textbf{Additional Readings:}
+
+\begin{itemize}
+\tightlist
+\item
+  Andy Gelman's Blog: \url{http://andrewgelman.com/}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Posit Cloud}
+\protect\hypertarget{posit-cloud}{}
+\end{frame}
+
+\begin{frame}{Software}
+\protect\hypertarget{software}{}
+Will do most work through Posit Studio:
+
+\url{https://posit.cloud/spaces/323676/join?access_code=-cWB4jXG0_PEIPItmrQWUzfsYsW4GZhTToU-Ork0}
+
+Free Student Account.
+\end{frame}
+
+\begin{frame}{Concepts Covered (1)}
+\protect\hypertarget{concepts-covered-1}{}
+\begin{itemize}
+\item
+  Identify situations in which a particular generalized linear model is
+  appropriate to answer a given research question with a given data set.
+\item
+  Perform common data analyses operations with generalized linear models
+  in the R programming language.
+\item
+  Interpret the results of generalized linear models in terms of the
+  original research questions
+\item
+  Construct graphical displays (figures and tables) which summarize the
+  results of a data analysis.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Concepts Covered (2)}
+\protect\hypertarget{concepts-covered-2}{}
+\begin{itemize}
+\item
+  Identify situations in which transforming the variables in the data
+  set before analysis is appropriate.
+\item
+  Interpret the results of analyses with transformed variables.
+\item
+  Employ common diagnostic statistics and plots to identify and correct
+  difficulties with (generalized) linear models.
+\item
+  Simulate data from a (generalized) linear model.
+\item
+  Produce statistical graphics to explain key results of generalized
+  linear models.
+\item
+  Write up the results of statistical analyses in a form suitable for
+  the results section of a scientific journal article.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Flipping The Class}
+\protect\hypertarget{flipping-the-class}{}
+\begin{itemize}
+\item
+  With a few exception, I will not lecture
+\item
+  Lecture notes posted in the class are for reference: I may or may not
+  spontaneously talk about them.
+\item
+  Before each class, one of the chapters of Gelman, Hill \& Vehtari will
+  be assigned for reading.
+\item
+  Students will take turns working the homework problems in class.
+  (\emph{Case Studies})
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Evidence Mix}
+\protect\hypertarget{evidence-mix}{}
+\begin{itemize}
+\item
+  Case Studies (1/2) -- Need to be able to get the discussion going, not
+  necessarily finish the problem.
+\item
+  Midterm Project (1/4)
+\item
+  Final Project (1/4)
+\end{itemize}
+
+\emph{Evidence turned in after May 1st will not be considered unless
+there are extenuating circumstances (i.e., you are getting an
+incomplete)}
+\end{frame}
+
+\begin{frame}{Case Studies (1/2)}
+\protect\hypertarget{case-studies-12}{}
+\begin{itemize}
+\tightlist
+\item
+  Serves dual purpose:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Forces you to verbalize your ideas about statistics, this promotes
+    readiness-to-learn
+  \item
+    Provides me with formative feedback
+  \end{itemize}
+\item
+  NOT graded on correctness
+\item
+  You are assigned problem (from book or Posit Cloud).
+\item
+  Prepare solution
+
+  \begin{itemize}
+  \tightlist
+  \item
+    or partial solution if you get stuck
+  \end{itemize}
+\item
+  Present as much as you completed in class
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Class will help you complete
+  \end{itemize}
+\item
+  Currently 8 are scheduled, but could be more/less depending on
+  schedule.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Case Study Procedures}
+\protect\hypertarget{case-study-procedures}{}
+\begin{itemize}
+\tightlist
+\item
+  There will be a Canvas discussion forum for posting Case Study
+  solutions (so you can access them easily from class).
+\item
+  Must be present on day of completion
+\item
+  We will try to scheduled approximately when they are due when assigned
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Let me know about planned travel, other commitments.
+  \item
+    In case of excused absence will try to reschedule
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Midterm/Final Project (1/4 each)}
+\protect\hypertarget{midtermfinal-project-14-each}{}
+\begin{itemize}
+\item
+  Find a data set and a research question.
+\item
+  (about 6 weeks before final due date) Get data set and research
+  question approved.
+\item
+  Analyze data (however you feel appropriate)
+\item
+  (2 weeks before final due date): Turn in draft for feedback
+\item
+  (1 week before final due date): Feedback returned
+\end{itemize}
+
+\emph{Final paper due.}
+\end{frame}
+
+\begin{frame}{Project Scoring Rubric}
+\protect\hypertarget{project-scoring-rubric}{}
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.8611}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.1389}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Criterion
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Points
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+Research question properly stated and motivated & 10 \\
+Data sufficiently described & 10 \\
+Analysis Research question properly stated and motivated & 10 \\
+Data sufficiently described & 10 \\
+Analysis method appropriate for research question and data & 10 \\
+Analysis correctly carried out & 10 \\
+Graphics and tables included to support analysis & 10 \\
+Diagnostic analyses carried out to check appropriateness of model &
+10 \\
+Results of analysis properly interpreted and summarized & 10 \\
+Limitations of analysis recognized & 10 \\
+Document text follows style/usage conventions for academic papers &
+10 \\
+\bottomrule\noalign{}
+\end{longtable}
+\end{frame}
+
+\begin{frame}[fragile]{Style Points}
+\protect\hypertarget{style-points}{}
+\begin{itemize}
+\item
+  Commenting Code
+\item
+  Using descriptive variable and function names
+\item
+  Formatting code properly (indentation to show program structure, white
+  space, using \texttt{\textless{}-} for assignments)
+\item
+  Using human readable label in plots and tables
+\item
+  Editing out dead-end code
+\item
+  Including information about data sources and meta-data.
+\item
+  Documenting function inputs, outputs and side-effects.
+\item
+  Properly parameterizing expressions (i.e., avoiding hard coded
+  constants).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Project Schedule}
+\protect\hypertarget{project-schedule}{}
+(On Canvas) Midterm paper due just before spring break. Final paper due
+at the end of finals week.
+\end{frame}
+
+\begin{frame}{Collaborations}
+\protect\hypertarget{collaborations}{}
+\begin{itemize}
+\tightlist
+\item
+  Case Studies
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Larger case studies can be assigned as a team
+  \item
+    Use Blackboard discussion groups for help
+  \end{itemize}
+\item
+  Projects
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Collaboration is possible but must be approved in advance
+  \item
+    Each team member provides a unique piece
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Plagiarism}
+\protect\hypertarget{plagiarism}{}
+\begin{itemize}
+\tightlist
+\item
+  Plagiarism is a serious problem
+
+  \begin{itemize}
+  \tightlist
+  \item
+    People have LOST THEIR DEGREES
+  \item
+    First time violations will be reported
+  \item
+    See FSU policies and resources
+  \item
+    Turn-it-in used for projects
+  \item
+    Credit your sources!
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{FSU Teaching}
+\protect\hypertarget{fsu-teaching}{}
+\begin{itemize}
+\tightlist
+\item
+  Don't use forums, FSU emails \&c for personal purposes
+
+  \begin{itemize}
+  \tightlist
+  \item
+    All FSU emails are public record
+  \item
+    \emph{Must} use FSU email for grade-related requests
+  \end{itemize}
+\item
+  \emph{Don't use FSU Resources to download copyrighted material not
+  related to your class work or research!}
+\item
+  Beware of leaving Bit Torrent clients on while connected to FSU
+  network
+\end{itemize}
+\end{frame}
+
+\begin{frame}{How's My Teaching?}
+\protect\hypertarget{hows-my-teaching}{}
+Dial: \st{644-5203}
+
+Email: \href{mailto:ralmond@fsu.edu}{\nolinkurl{ralmond@fsu.edu}}
+
+Let me know if you have problems reading material, especially if you
+have trouble distinguishing red from black.
+\end{frame}
+
+\begin{frame}{Turning the \st{Battleship} Destroyer}
+\protect\hypertarget{turning-the-battleship-destroyer}{}
+👍 (Thumbs up) I get it already, you can skip ahead
+
+👎 (Thumbs down) I'm confused, give me more detail
+
+👏 (Hand up) Stop, I have a question (or issue)
+
+What to do if you are lost
+
+\begin{itemize}
+\tightlist
+\item
+  Confusion is a part of learning
+
+  \begin{itemize}
+  \tightlist
+  \item
+    But it should be temporary
+  \end{itemize}
+\item
+  Ask questions in class!
+\item
+  Come visit during office hours, or make an appointment
+\item
+  Be specific about what is confusing you
+\end{itemize}
+\end{frame}
+
+\end{document}
