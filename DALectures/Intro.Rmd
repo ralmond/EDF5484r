@@ -24,7 +24,7 @@ Introduction and Welcome
 -   Email: [ralmond\@fsu.edu](mailto:ralmond@fsu.edu){.email}
 -   Office Hours, By appointment (appointment link: <https://doodle.com/mm/russellalmond/book-a-time>)
 -   <https://fsu.zoom.us/my/ralmond>
--   On Campus, TTH Afternoons
+-   On Campus, MW Afternoons
 -   STB 3204-J
 -   Has ADHD
 
@@ -34,7 +34,7 @@ Questions welcome during lectures (speak up if on Zoom)
 
 -   I'm replacing the formal "office hours" with a "coffee hour" and "tea time" after my classes.
     -   Coffee Hour: T,Th 11:30 in my Zoom Room <https://fsu.zoom.us/my/ralmond>)
-    -   Tea Time: W,F in my office 3204-J
+    -   Tea Time: MW in my office 3204-J
 -   Feel free to drop by with technical questions, or just to chat
 -   Zoom and office door open (although I may be in kitchen or 3204 common area).
 -   Appointment link: <https://doodle.com/mm/russellalmond/book-a-time>
@@ -147,7 +147,7 @@ Free Student Account.
 ## Project Scoring Rubric
 
 | Criterion                                                         | Points |
-|--------------------------------------------------------------|----------|
+|-------------------------------------------------------------------|--------|
 | Research question properly stated and motivated                   | 10     |
 | Data sufficiently described                                       | 10     |
 | Analysis Research question properly stated and motivated          | 10     |
@@ -178,17 +178,40 @@ Free Student Account.
 
 -   Properly parameterizing expressions (i.e., avoiding hard coded constants).
 
+Not so good:
+
+```{r}
+X <- runif(10)
+Y <- .6*x +.8*rnorm(10)
+
+```
+
+Better:
+
+```{r}
+N <- 10 # Sample Size
+X <- runif(N)
+Y < .6*x + .8*rnorm(N)
+```
+
+Best:
+
+```{r}
+N <- 10 # Sample Size
+r <- .6 # Correlation
+X <- runif(N)
+Y < r*x +  sqrt(1-r^2)*rnorm(N)
+```
+
 ## Project Schedule
 
-(On Canvas)
-Midterm paper due just before spring break.
-Final paper due at the end of finals week.
+(On Canvas) Midterm paper due just before spring break. Final paper due at the end of finals week.
 
 ## Collaborations
 
 -   Case Studies
     -   Larger case studies can be assigned as a team
-    -   Use Blackboard discussion groups for help
+    -   Use Canvas discussion groups for help
 -   Projects
     -   Collaboration is possible but must be approved in advance
     -   Each team member provides a unique piece
