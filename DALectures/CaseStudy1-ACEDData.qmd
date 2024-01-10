@@ -1,0 +1,678 @@
+---
+title: "ACED Data"
+format: pdf
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+# About ACED
+
+ACED stands for Adaptive Content and Evidence-based Diagnosis. It was an
+intelligent tutoring system built by Val Shute and others
+[@FatHog,@shute2006]. It's domain was algebraic sequences, although only
+the geometric sequences branch was involved in the field trials.
+
+## ACED Tasks and Feedback
+
+ACED uses extended constructed response items or tasks.
+
+![Sample ACED Item](img/ACEDitem.jpg)
+
+For each item, if the student got the item wrong they could be provided
+with elaborated feedback.
+
+![Sample Item Feedback](img/ACEDfeedback.jpg)
+
+## Bayesian Network Scoring Engine
+
+As the students are solving problems, they're abilities can be measured
+as the network goes on. The scoring model is a Bayesian network
+[@bninea]. The specific Bayesian network used in ACED is shown below.
+
+![ACED Competency Model](img/ACEDmodel.png)
+
+In this Bayesian network, each node in the graph corresponds to a
+(latent) variable which takes on one of the values *high*, *medium* or
+*low*. The Bayes net produces a probability distribution over the latent
+variable.
+
+The columns `P.sgp..H`, `P.sgp..M` and `P.sgp..L` give the probabilities
+of the that the student is in the *high*, *medium* or *low* state. The
+expected value, `EAP.sgp` (expected a posteriori, solve geometric
+problems) is computed by assigning *high = 1*, *medium = 0* and *low =
+-1*, and then taking the expected value,
+`EAP.sgp <- 1*P.sgp..H + 0*P.sgp..M + -1*P.sgp..L`.
+
+The other EAP variables represent the other variables in the model.
+
+One advantage of using a model like a Bayesian network is that it can
+estimate the student's ability using only part of the data. It can also
+calculate for any item its *expected weight of evidence* [@bninea], the
+predicted amount of information the item could provide about the target
+node in the network (*Solve Geometric Problems*).
+
+## Pretest and posttest
+
+In addition to the ACED items, there is also a 25 item pretest and
+post-test. More about this in another case study.
+
+## The experiment
+
+Around 300 (slightly less, after restricting the sample to the subjects
+for which consent and assent were obtained) middle school students
+participated in the study. Arithmetic sequences were part of the normal
+math curriculum, but geometric sequences were not.
+
+The students were split into four groups:
+
+A. Full feedback/adaptive sequence. The full feedback was turned on and
+the expected weight of evidence algorithm is used to make a custom
+sequence for each student.
+
+B. Accuracy-only feedback/adaptive sequence. Instead of the full
+feedback, the student is only told that their solution is correct or
+incorrect. The same adaptive sequence algorithm is used.
+
+C. Full feedback/linear sequence. The full feedback was turned on, but
+the same fixed (linear) sequence of items is used for all students in
+this group.
+
+D. Control. These students took the pretest and post-test, but did
+independent study while other students were using ACED.
+
+This is an incomplete factorial design (i.e., we have two factors, but
+the accuracy only/linear sequence condition is replaced with the
+control).
+
+## The research questions
+
+1.  Do the pretest, posttest and internal game measures measure the same
+    thing? (Validity and Reliability)
+
+2.  Does using ACED increase students understanding of algebraic
+    sequences?
+
+3.  Do feedback and/or adaptive sequencing affect the amount of
+    learning?
+
+The first can be answered with simple regression. The last two can be
+answered with a technique called the analysis of covariance (ANCOVA).
+
+# Loading R packages
+
+R functions (and data) are bundled together in *packages*. Various
+statisticians have produced packages to extend the abilities of R. A
+complete list of these packages (there are a whole lot) can be found on
+[CRAN](https://cran.r-project.org/).
+
+We will use two: `DescTools` and `tidyverse`.
+
+`DescTools` has a bunch of tools for descriptive statistics. The
+meta-package `tidyverse` loads a bunch of tools which make R syntax a
+little bit closer to how statisticians think about data. @r4ds2e
+explores these in detail.
+
+## Installing packages
+
+R comes with a bunch of core packages which perform many analyses.
+Additional packages need to be downloaded from the repository (CRAN, one
+of its mirrors, or a non-CRAN repository like Bioconductor or
+R-Universe). Copying the package files from the repository to the local
+machine is called installation. This only needs to be done once, but
+packages might need to be updated if a new version of the package (or R)
+is released.
+
+There are two ways to install packages: using RStudio and using R.
+
+Using RStudio, select `Tools > Install Packages ...` and put in the name
+of the packages you want to install.
+
+The second way is to call the `install.packages` function in R.
+
+```{r installation}
+## Skip this step if packages are already installed.
+if (length(find.package(c("tidyverse","DescTools"))) < 2L) {
+  ## Set the repos field to avoid having R prompt you to select a mirror.
+  install.packages(c("tidyverse","DescTools"),
+                   repos="https://cloud.r-project.org/")
+}
+```
+
+## Using the package
+
+Once the package is installed, it can be used. First, we can specify
+that we want the function from a specific package by putting the package
+name and `::` in front of the function name. For example,
+`DescTools::Cor()` refers to the function `Cor()` in the `DescTools`
+package, while `stats::cor()` is the similar function in the core
+`stats` package.
+
+If we are going to use the package a lot, we can attach it the list of
+packages R searches for functions, by using the function `library()`.
+The function `search()` shows which packages are currently attached.
+
+```{r search}
+search()
+```
+
+Calling `library()` adds new packages to the search list.
+
+```{r library}
+library(DescTools)
+library(tidyverse)
+search()
+```
+
+It is very common to have a couple of calls to `library()` at the start
+of each analysis script.
+
+## Getting help on functions and packages.
+
+The function `help(`*functionname*`)` will give information about a
+function. This is abbreviated `?`*functionname*.
+
+```{r help}
+help("Cor")
+```
+
+Note that in R Studio, there is a tab in which help it appears. Note
+that at the bottom of the help is an example of the command in action,
+which you can run to see how it works.
+
+You can get help on the whole package by calling `help(package="XXX")`.
+
+```{r helpPack}
+help(package="DescTools")
+```
+
+Finally, you should credit the package authors. You can find the right
+way to do this using the `citation()` function.
+
+```{r citation}
+citation()
+citation("DescTools")
+citation("tidyverse")
+```
+
+# Loading the Data
+
+## Importing the data
+
+The functions `base::read.csv()` and `readr::read_csv()` will read a a
+comma separated value (csv) file.
+
+The function `summary()` shows a description of the variables.
+
+The function `head()` shows the first couple of lines.
+
+```{r loadACED}
+ACEDextract <- read_csv("ACED_extract1.csv")
+```
+
+## Viewing the data
+
+A couple of ways to view the data.
+
+`summary()` gives a summary.
+
+```{r summary}
+summary(ACEDextract)
+```
+
+`head()` shows the first couple of lines.
+
+```{r head}
+head(ACEDextract)
+```
+
+In RStudio, you can also use `view()` to open a viewer window, or find
+the variable name in the environment tab.
+
+Just typing the name of the variable will dump it all out. That is
+usually a mistake if there are a lot of cases. But in RStudio, it give
+you a nice interactive browser.
+
+```{r dump,eval=FALSE}
+ACEDextract
+```
+
+## A quick note on subsetting
+
+We can use the expression `X[i,j]` to extract a single value.
+
+Can also use vectors to get subsets.
+
+```{r subset}
+ACEDextract[1,1]
+ACEDextract[1:10,c("SubjID","Cond_code")]
+```
+
+Tibbles and data.frames behave somewhat differently here. Selecting a
+single value from a data frame gives a scalar (actually, vector of
+length 1), but from a tibble, gives a tibble of size 1 by 1. Use
+`as.numeric()` or `as.character()` to convert to a vector.
+
+```{r as.character}
+as.character(ACEDextract[1,1])
+```
+
+### Selecting variables
+
+Variables can be extracted by leaving the rows blank. A single variable
+can be extracted using the `$` operator.
+
+```{r getval}
+summary(ACEDextract$Correct)
+```
+
+It can also be done using the tidyverse `select` (multiple variables) of
+`pull` (single variable).
+
+```{r select}
+select(ACEDextract,starts_with("P.sgp"))
+```
+
+The output of `select` is a tibble, even if it is just a single
+variable. If we want a vector instead, use `pull`.
+
+```{r pull}
+head(pull(ACEDextract,EAP.sgp))
+```
+
+### Selecting cases
+
+Frequently, we want to identify a subset of cases based on some logical
+condition.
+
+We can use a logical subscript to do this, use a logical expression
+which evaluates to true of false for each row of the data frame or
+tibble.
+
+```{r logicalSelection}
+head(ACEDextract$Cond_code!="control")
+summary(ACEDextract[ACEDextract$Cond_code!="control",1:5])
+```
+
+We can also use the `filter()` function.
+
+```{r filter}
+filter(ACEDextract,Cond_code!="control")
+```
+
+### Chaining data wrangling steps.
+
+The pipe operator `%>%` (from the `magrittr` package) allows chaining
+the output of one command to another.
+
+It is "syntactic sugar" which tells R to use the output of the last
+command as the first argument to the next.
+
+In `tidyverse` is used to pass the data set along.
+
+Often used with `->` assignment to specify where to save the output.
+
+::: callout-caution
+The `%>%` operator needs to be the last thing on the line, not the first
+on the next line.
+:::
+
+```{r pipes}
+ACEDextract %>%
+  filter(Cond_code != "control") %>%
+  select(all_of(c("Cond_code","pre_scaled","post_scaled","EAP.sgp"))) ->
+  ACEDworking
+summary(ACEDworking)
+```
+
+For more possibilities, look at the `Data Transformation with dplyr`
+cheat sheet, or *R 4 Data Science* book.
+
+# Cleaning the Data
+
+Usually need to do extra work for the raw data.
+
+## Missing Data
+
+Look at the summaries. Notice that the minimum value is -999. That is a
+ridiculous number. In fact, it is the code used for missing values in
+this data set.
+
+```{r sum1}
+summary(ACEDextract)
+```
+
+There are two ways to fix this. First, we can simply set the value of
+the cell to `NA`. We can do this either by setting the value to `NA` or
+setting `is.na` to true.
+
+```{r settingNA}
+ACEDextract$EAP.sgp[ACEDextract$EAP.sgp < -10] <- NA
+is.na(ACEDextract$EAP.exp[ACEDextract$EAP.exp < -10]) <- TRUE
+```
+
+However, as we need to do every single column, it is probably easier to
+do this when we read the data in.
+
+```{r loadACEDnoNA}
+ACEDextract <- read_csv("ACED_extract1.csv",na="-999")
+summary(ACEDextract)
+```
+
+## Coding categorical variables
+
+The `read_csv` function doesn't do anything in particular with strings.
+
+For `SubjID` that is sensible, that variable is only really a label.
+
+However, `Session`, `Cond_code`, `Feedback`, `Gender`, `Race` and
+`Level_Code` are actually categorical (nominal) variables. In R, these
+are called factor variables, and the function `factor` is used to create
+them.
+
+```{r factors}
+ACEDextract$Session <- factor(ACEDextract$Session)
+ACEDextract$Cond_code <- factor(ACEDextract$Cond_code)
+ACEDextract$Sequencing <- factor(ACEDextract$Sequencing)
+ACEDextract$Feedback <- factor(ACEDextract$Feedback)
+ACEDextract$Gender <- factor(ACEDextract$Gender)
+ACEDextract$Race <- factor(ACEDextract$Race,1:8)
+ACEDextract$Level_Code <- factor(ACEDextract$Level_Code)
+summary(ACEDextract)
+```
+
+## Making a gain score
+
+We can add new variables to the tibble using `mutate()`. Don't forget to
+assign the result back to a variable.
+
+```{r mutate}
+ACEDextract %>%
+  mutate(gain=post_scaled-pre_scaled) ->
+  ACEDextract
+summary(ACEDextract$gain)
+```
+
+```{r writeOutSPSS}
+haven::write_sav(ACEDextract,"ACEDextract.sav")
+```
+
+# Marginal Summaries
+
+## Descriptive Summaries
+
+The function `DescTools::Desc` gives a bunch of summaries.
+
+```{r desc}
+Desc(ACEDextract$Correct)
+Skew(ACEDextract$Correct,na.rm=TRUE,ci.type="classic",conf.level=.95)
+ 
+```
+
+```{r summarize}
+ACEDextract %>%
+  summarize(mCorrect=mean(Correct), sdCorrect=sd(Correct),
+            mIncorrect=mean(Incorrect),sdIncorrect=sd(Incorrect))
+
+```
+
+Need to filter out NAs
+
+```{r summarizeNA}
+ACEDextract %>%
+  filter(!is.na(Correct) & !is.na(Incorrect)) %>%
+  summarize(mCorrect=mean(Correct), sdCorrect=sd(Correct),
+            mIncorrect=mean(Incorrect),sdIncorrect=sd(Incorrect))
+
+```
+
+Adding a `group_by` step breaks the summaries down.
+
+```{r groupBy}
+ACEDextract %>%
+  filter(!is.na(Correct) & !is.na(Incorrect)) %>%
+  group_by(Level_Code) %>%
+  summarize(mCorrect=mean(Correct), sdCorrect=sd(Correct),
+            mIncorrect=mean(Incorrect),sdIncorrect=sd(Incorrect))
+```
+
+## Plots using ggplot2
+
+GGplot (stands for the *Grammar of Graphics*, a book by Leyland
+Wilkenson)
+
+It has the following steps:
+
+-   A call to `ggplot()` which specifies the data (often piped in using
+    `%>%`)
+-   A call to `aes()` which sets up the aesthetics of the plot.
+    -   `x` -- the x-axis variable (can be a column name from the data)
+    -   `y` -- the y-axis variable
+    -   `color` and `fill` -- used to add color to the plot
+    -   `shape` --- shape of the points
+    -   `linetype` -- type of the line
+    -   `size` -- size of points/linewidth
+    -   Could be others specific to certain geometries.
+-   A call to `geom_XXX()` to show what should be rendered.
+
+Other optional steps: 
+
+* A call to `stat_XXX()` to calculate statistics
+* A call to `scale_*_XXX()` to establish a scale, here `*` is an
+aesthetic. 
+* A call to `facet_grid()` or `facet_wrap()` to put multiple
+subplots 
+* Calls to `labs()`, `annotate()`, `guide()`, `theme()`.
+
+These are chained together with `+`.
+
+Graph is drawn when the result is printed.
+
+See the `Data Visualization with ggplot2` cheat sheet.
+
+## Histograms and Density Plots
+
+Histogram uses a single X value.
+
+```{r hist}
+corhist <- ggplot(ACEDextract,aes(x=Correct)) + geom_histogram() 
+corhist
+```
+
+```{r addDensity}
+ggplot(ACEDextract,aes(x=Correct)) + geom_histogram(aes(y=..density..)) + geom_density()
+```
+
+Add a normal curve:
+
+```{r normCurve}
+ggplot(ACEDextract,aes(x=Correct)) + geom_histogram(aes(y=..density..)) +
+  stat_function(fun=dnorm,args=list(mean=mean(ACEDextract$Correct,na.rm=TRUE),
+                                    sd=sd(ACEDextract$Correct,na.rm=TRUE)))
+```
+
+### Using Facets to break down by group.
+
+Can use `rows` or `cols` argument to grid to facet by rows or columns.
+
+```{r facets}
+ggplot(ACEDextract,aes(x=Correct)) + geom_histogram() +
+  facet_grid(rows=vars(Level_Code))
+```
+
+## Boxplots, Dot Plots and Violin Plots
+
+Boxplots naturally use a categorical variable on one access and a
+continuous variable on the other access.
+
+```{r boxplots}
+ggplot(ACEDextract,aes(x=Cond_code,y=gain)) + geom_boxplot()
+```
+
+Dotplots plot the individual points, and so give more detail than a
+boxplot.
+
+```{r dotplots}
+ggplot(ACEDextract,aes(x=Cond_code,y=gain))+ 
+  geom_dotplot(binaxis="y",stackdir="center")
+```
+
+A violin plot takes the density and doubles it to produce a shape like
+an odd stringed instrument.
+
+```{r violinPlot}
+ggplot(ACEDextract,aes(x=Cond_code,y=gain)) + geom_violin()
+```
+
+# Quantile--Quantile plots
+
+Goal, check if data follow a particular distribution.
+
+1)  Sort data in increasing order -
+
+-   These are the sample quantiles, corresponding to probabilities
+    $(i-.5)/N$
+
+2)  Look up the corresponding quantiles of the reference distribution
+    (e.g., `qnorm()`)
+3)  Plot them, should be a diagonal line.
+
+-   Intercept is mean and slope is sd.
+
+4)  Departures from straight line indicate distribution doesn't fit.
+
+*This is not a scatterplot*.
+
+## SPSS
+
+-   `Analyze > Descriptive Statistics > Q-Q Plots...`
+
+-   Regular and Detrended version
+
+    -   I prefer regular
+
+-   <http://statistics.laerd.com/spss-tutorials/testing-for-normality-using-spss-statistics.php>
+
+-   <http://www.microbiologybytes.com/maths/spss2.html>
+
+SPSS puts the theoretical quantiles on the Y axis, and R puts them on
+the X, so the interpretations are flipped.
+
+## Mean and standard deviation.
+
+```{r qq1}
+normdat <- data.frame(
+  norm1 = rnorm(100),
+  norm2 = rnorm(100,10),
+  norm3 = rnorm(100,0,2),
+  norm4 = rnorm(100,5,2.5)
+)
+ggplot(normdat,aes(sample=norm1)) + geom_qq() + labs(title="mean 0, sd 1")
+ggplot(normdat,aes(sample=norm2)) + geom_qq() + labs(title="mean 5, sd 1")
+ggplot(normdat,aes(sample=norm3)) + geom_qq() + labs(title="mean 0, sd 2")
+ggplot(normdat,aes(sample=norm4)) + geom_qq() + labs(title="mean 5, sd 2.5")
+```
+
+## Skewness is a C curve
+
+```{r qqSkew}
+skewdat <- data.frame(
+  negskew = rbeta(100,1,9),
+  symmetric = rbeta(100,5,5),
+  posskew = rbeta(100,9,1)
+)
+ggplot(skewdat,aes(sample=negskew)) + geom_qq() + labs(title="Negatively Skewed")
+ggplot(skewdat,aes(sample=symmetric)) + geom_qq() + labs(title="Symmetric ")
+ggplot(skewdat,aes(sample=posskew)) + geom_qq() + labs(title="Postiviely Skewed")
+```
+
+<https://pluto.coe.fsu.edu/rdemos/IntroStats/SkewnessQQ.Rmd>
+
+*Note: SPSS reverses the axis, so the curves go in the opposite
+direction*
+
+## Kurtosis shows up as an S-curve
+
+```{r qqkurt}
+kurtdat <- data.frame(
+  flat = runif(100,-3,3),
+  meso = rnorm(100),
+  lepto = rt(100,3)
+)
+ggplot(kurtdat,aes(sample=flat)) + geom_qq() + labs(title="Flat")
+ggplot(kurtdat,aes(sample=meso)) + geom_qq() + labs(title="Normal")
+ggplot(kurtdat,aes(sample=lepto)) + geom_qq() + labs(title="Heavy tails")
+```
+
+Generally, flat is not a problem. Heavy tails means lots of outliers, so
+estimates could be sensitive to outliers.
+
+<https://pluto.coe.fsu.edu/rdemos/IntroStats/KurtosisQQ.Rmd>
+
+# A short aside on hypothesis testing.
+
+If we estimate a statistic, *from a representative sample*, then 95% of
+the the population value should be within 2 standard errors of the
+sample value.
+
+If we want to test that a statistic is not zero, we can divide the test
+statistic by its standard error. Call this value $t$. If $t>2$ then we
+are getting good evidence that the sample didn't come from a population
+in which the true value is zero.
+
+## Example
+
+```{r ttest}
+ACEDextract %>%
+  filter(!is.na(gain)) %>%
+  group_by(Cond_code) %>%
+  summarize(M=mean(gain),S=sd(gain),se=MeanSE(gain),
+            t=mean(gain)/MeanSE(gain), d=mean(gain)/sd(gain))
+```
+
+The $t$ statistic follows a Student's $t$ distribution, with degrees of
+freedom related to how many data points are available to estimate the
+S.E.
+
+We want the 97.5% point of the Student's $t$ distribution. The `qt`
+function calculates this for us.
+
+```{r qt}
+qt(.976,c(1:30,Inf))
+```
+
+So as long as you have 20 or so observations per group, 2 is a pretty
+good approximation.
+
+Don't want to take significance testing, $p$-value too seriously, as
+there are lots of assumptions which may not hold.
+
+## Effect size
+
+Note that significance is really a measure of how good the sample is.
+
+If the sample is really big, we can pick up really small differences.
+
+So compute effect sizes.
+
+For gain score, the effect size is Cohen's $d$, which we get by dividing
+the mean by the standard deviation.
+
+## Quick interpretation table
+
+| Test Statistic | Effect Size | Interpretation                                                                 |
+|----------------|-------------|--------------------------------------------------------------------------------|
+| Big            | Big         | Effect is likely big and important                                             |
+| Big            | Small       | Sample size is big enough to detect difference but it is small and unimportant |
+| Small          | Small       | Effect is small and unimportant                                                |
+| Small          | Big         | Might be an effect, but don't have enough power to be sure                     |
+
+# Assignment
+
+Pull in the ACED data and do some exploratory analysis.
+
+1)  What can you learn about the variables?
+
+2)  Are the variables normally distributed?
+
+3)  Are there any unusual values that should be investigated?
