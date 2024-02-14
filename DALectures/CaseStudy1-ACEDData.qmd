@@ -291,7 +291,7 @@ tibble.
 
 ```{r logicalSelection}
 head(ACEDextract$Cond_code!="control")
-summary(ACEDextract[ACEDextract$Cond_code!="control",1:5])
+ACEDextract[ACEDextract$Cond_code!="control",1:5]
 ```
 
 We can also use the `filter()` function.
@@ -303,7 +303,8 @@ filter(ACEDextract,Cond_code!="control")
 ### Chaining data wrangling steps.
 
 The pipe operator `%>%` (from the `magrittr` package) allows chaining
-the output of one command to another.
+the output of one command to another. More recent versions of R also use
+`|>`
 
 It is "syntactic sugar" which tells R to use the output of the last
 command as the first argument to the next.
@@ -322,7 +323,7 @@ ACEDextract %>%
   filter(Cond_code != "control") %>%
   select(all_of(c("Cond_code","pre_scaled","post_scaled","EAP.sgp"))) ->
   ACEDworking
-summary(ACEDworking)
+ACEDworking
 ```
 
 For more possibilities, look at the `Data Transformation with dplyr`
@@ -372,7 +373,10 @@ them.
 
 ```{r factors}
 ACEDextract$Session <- factor(ACEDextract$Session)
-ACEDextract$Cond_code <- factor(ACEDextract$Cond_code)
+ACEDextract$Cond_code <- factor(ACEDextract$Cond_code, 
+                                c("control","linear_full",
+                                  "adaptive_acc", 
+                                  "adaptive_full"))
 ACEDextract$Sequencing <- factor(ACEDextract$Sequencing)
 ACEDextract$Feedback <- factor(ACEDextract$Feedback)
 ACEDextract$Gender <- factor(ACEDextract$Gender)
@@ -390,6 +394,8 @@ assign the result back to a variable.
 ACEDextract %>%
   mutate(gain=post_scaled-pre_scaled) ->
   ACEDextract
+# ACEDextract$gain <- ACEDextract$post_scaled -
+#                     ACEDextract$pre_scaled
 summary(ACEDextract$gain)
 ```
 
@@ -455,14 +461,13 @@ It has the following steps:
     -   Could be others specific to certain geometries.
 -   A call to `geom_XXX()` to show what should be rendered.
 
-Other optional steps: 
+Other optional steps:
 
-* A call to `stat_XXX()` to calculate statistics
-* A call to `scale_*_XXX()` to establish a scale, here `*` is an
-aesthetic. 
-* A call to `facet_grid()` or `facet_wrap()` to put multiple
-subplots 
-* Calls to `labs()`, `annotate()`, `guide()`, `theme()`.
+-   A call to `stat_XXX()` to calculate statistics
+-   A call to `scale_*_XXX()` to establish a scale, here `*` is an
+    aesthetic.
+-   A call to `facet_grid()` or `facet_wrap()` to put multiple subplots
+-   Calls to `labs()`, `annotate()`, `guide()`, `theme()`.
 
 These are chained together with `+`.
 

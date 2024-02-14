@@ -1,0 +1,92 @@
+---
+title: "Common Random Variable Distributions"
+output: html_notebook
+---
+
+## Uniform
+
+All values in range have equal probability.  
+
+Default range is $(0,1)$.
+
+`runif(n,min,max)`, `sample.int()`
+
+## Normal
+
+Starndard value has mean 0 and sd 1.
+
+`rnorm(n,mean,sd)`
+
+Comes about naturally through central limit theorem:  sums of 
+things.
+
+### Lognormal
+
+$\log(X) \sim N(logmean,logsd)$
+
+mean of the logs is not the same as the log of them mean.  
+Often use the log of the median.
+
+Often talk about error factors.  
+
+Used a lot in reliability analysis (estimating rare probabilities).
+
+Also often used with money.
+
+## Exponential and Gamma
+
+Often used for waiting times.  
+
+Gamma is a sum of exponentials.
+
+Sum of two gammas (with same scale parameter) is also a gamma.
+
+Positively skewed distribution.
+
+Chi-square is a special case of the gamma.
+
+Chi-square is the sum of so many (d.f.) squared normal random variables.
+
+### Positively skewed variable, bound below at 0
+
+Both gamma and lognormal are good for:
+
+variance
+
+discrimination parameters in IRT models
+
+## Beta distribution
+
+`rbeta`
+
+Good for probabilities and proportions.
+
+## Functions of a normal
+
+Let $X_1, \ldots, X_K$ be $N(0,\sigma)$ random variables
+
+$$\sum_{k=1}^K X_k^2 \sim \sigma^2\chi^2(K)$$
+This is the $\chi^$ distribution.
+
+Sampling distribution of a variance estimate.
+
+### Student's t
+
+$X \sim N(0,1)$
+
+$S \sim \chi^2(K)$
+
+$X/\sqrt{S} \sim t(0,1,K)$
+
+Symmetric like normal distribution, but higher kurtosis.
+
+Student's t with 1 d.f. is the _Cauchy_ distrution.
+
+It has no mean and not variance.
+
+### F
+
+If $S_1 \sim \chi^2(K_1)$ and $S_2 \sim \chi^2(K_2)$, then 
+$S_1/S_2 \sim F(K_1,K_2)$.
+
+

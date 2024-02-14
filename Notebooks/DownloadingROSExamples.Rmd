@@ -1,0 +1,40 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+Install link to Vehtari's github.
+
+```{r}
+remotes::install_github("avehtari/ROS-Examples",subdir = "rpackage")
+```
+
+This is not working!
+
+```{bash}
+git clone https://github.com/avehtari/ROS-Examples.git
+```
+
+(Windows users look at TortoiseGit).
+
+
+
+
+```{r}
+library("rprojroot")
+root_criterion(function(path) file.exists("ROS_frontcover.png"),
+               "ROS front cover file.")
+root<-has_file("ROS_frontcover.png")$make_fix_file()
+library("arm")
+# for reproducibility of simulated data
+```
+
+Instead do this manually.
+
+```{r}
+electric_wide <- read.table(file.path("ROS-Examples","ElectricCompany/data","electric_wide.txt"), header=TRUE)
+head(electric_wide)
+```
+

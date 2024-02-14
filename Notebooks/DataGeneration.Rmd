@@ -1,0 +1,258 @@
+---
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+|                               |
+|-------------------------------|
+| Title: "Generating Data in R" |
+| Author: "Russell Almond"      |
+
+## Systematic Data
+
+-   `c()`
+
+All elements should be same type.
+
+Can add names.
+
+```{r}
+c(2,4,6,NA,17)
+c(1:5,NA,7)
+c(Fred=1,George=2,Mary=3)
+c("Hellow","orld")
+```
+
+-   `seq()` and `:`
+
+Colon just specifies first and last. `seq()` allows for a step, too.
+
+```{r}
+1:10
+10:1
+seq(-3,3,.1)
+```
+
+`1:nrow(X)` -- very common idiom.
+
+-   `rep()` -- Replicates the first argument.
+
+```{r}
+rep(c("Control","Treat1","Treat2"),10)
+rep(c("Control","Treat1","Treat2"),each=10)
+```
+
+-   `paste()` and `sprintf()`
+
+`paste` joins character vectors together. Useful for adding fixed string
+to number.
+
+```{r}
+paste("Sample",1:5)
+paste("Sample",1:5,"new",sep="_")
+paste0("User",1:5)
+
+```
+
+`file.path()` is similar to paste, but the separator is the directory
+separator.
+
+```{r}
+file.path("Assignments","problemcs1.sav")
+```
+
+`sprintf(template, var1, var2, ...)` slots the variables into the
+templates. Common templates `%s` -- string, `%d` integer, `%f` floating
+point, `%e` floating point with exponential, `%g`, pick one of f or e.
+
+```{r}
+sprintf("Template text: s:%s, d:%d, f:%f, e:%e, g:%g \n",
+   "Hi", 7, 3.14, 1000000000000, 30042)
+   #\n is a newline
+```
+
+## Matrixes, Arrays, Data Frames and Tibbles
+
+## Matrixes
+
+-   `matrix()` and `array()`
+
+```{r}
+args(matrix)
+args(array)
+```
+
+-   `dim()` and `dimnames()`
+
+Dim is a vector of dimensions.
+
+dimnames is a list of "rownames" followed by "colnames"
+
+```{r}
+dim(state.x77)
+dimnames(state.x77)
+```
+
+Do we want to use state.name or state.abb \* `[]` operator
+
+-   `drop=FALSE`
+
+The extraction operator can be used with a single argument (in which
+case the array is treated as a vector, or one argument per dimension.)
+
+```{r}
+mat <- matrix(1:12,3,4)
+mat[7]
+mat[2,4]
+```
+
+Can omit index to get whole row/column.
+
+```{r}
+mat[2,]
+mat[,3]
+mat[3,,drop=FALSE]
+
+```
+
+### Column-major order and `byrows` argument.
+
+```{r}
+matrix(1:12,3,4)
+matrix(1:12,3,4,byrow=TRUE)
+```
+
+By default R uses column-major (columns first) order Can change by
+adding byrow.
+
+FORTRAN also uses column-major order.
+
+C, python, ... use row-major order.
+
+### Lists, Data Frames and Tibbles
+
+-   `list()` and `namedlist()`
+    -   `[]` versus `[[]]` versus `$`
+
+    -   `[n]` selects a sublist (containing n)
+
+    -   `[[n]]` selects single element
+
+    -   `$name` selects element by name.
+-   `data.frame`
+    -   list-of-columns view (`[[]]` and `$`)
+    -   matrix-like view (`[,]`)
+-   `tibble`
+    -   row names discouraged
+    -   `drop=FALSE`, and `pull()`
+
+## Random numbers.
+
+### Distributions in the `stats` package.
+
+-   `dXXX(x)` -- `x` is data value, returns density
+-   `pXXX(q)` -- `q` is quantile, returns (lower tail) propbability
+-   `qXXX(p)` -- `p` is (lower tail) probability, returns quantile
+-   `rXXX(n)` -- `n` is number of samples
+
+Here `n` is `nrows()*ncol()` of target matrix.
+
+Commonly used:
+
+-   `rnorm()` -- normal
+-   `runif()` -- uniform
+-   `rt()` -- t-distribution
+
+### Sampling
+
+-   `sample()` and `sample.int()`
+
+-   `factor()` and `ordered()`
+
+## Multivariate Models
+
+### Bivariate normal
+
+Means of X and Y, $\mu_X, \mu_Y$
+
+SD of X and Y, $\sigma_X, \sigma_Y$
+
+Correlation $\rho_{XY}$
+
+$$ Y = \sigma_Y\left ( \rho_{xy} (X-\mu_X)/\sigma_X + \sqrt{1-\rho_{xy}^2} \epsilon \right ) + \mu_Y $$
+
+```{r}
+mx <- 3; my<- 10
+sx <- 1; sy<-2.5
+rxy <- .6
+N <- 10
+
+X <- rnorm(N,mx,sx)
+Y <- sy*(rxy*(X-mx)/sx + sqrt(1-rxy^2)*rnorm(N)) + my
+dat <- data.frame(X=X,Y=Y)
+apply(dat,2,mean)
+apply(dat,2,sd)
+cor(dat)
+```
+
+### Multivariate normal
+
+Mean Vector $\boldsymbol{\mu}$ and Covariance Matrix
+$\boldsymbol{\Sigma}$
+
+Often written as
+$\boldsymbol{\Sigma}=\textrm{diag}(\boldsymbol{\sigma}) \boldsymbol{R}\textrm{diag}(\boldsymbol{\sigma})$
+
+`Sigma <- diag(sigma) %*% R %*% diag(sigma)`
+
+$R$ is correlation matrix.
+
+-   Must be positive-definite (check with `chol(R)`).
+
+-   `mvtnorm::rmvnorm()`
+
+Let $\boldsymbol{A}^{T}\boldsymbol{A} = \boldsymbol{\Sigma}$:
+`A <- chol(Sigma)`
+
+Then if $\boldsymbol{Z}$ is a $n \times p$ matrix of standard (i.i.d.)
+normal random values, then
+$\boldsymbol{X}=\boldsymbol{A}\boldsymbol{Z} + \boldsymbol{\mu}$
+
+```{r}
+mv <- c(1,2,3)
+sv <- c(.2,.3,.4)
+R <- matrix(c(1,-.1,.9,-.1,1,-.4,.9,-.4,1),3,3)
+R
+chol(R)
+
+```
+
+```{r}
+Sigma <- diag(sv)%*%R%*%diag(sv)
+Sigma
+```
+
+```{r}
+A <- chol(Sigma)
+N <- 10
+X <- matrix(rnorm(N*nrow(A)),ncol=nrow(A))%*%A + mv
+apply(X,2,mean)
+apply(X,2,sd)
+cor(X)
+```
+
+```{r}
+X <- mvtnorm::rmvnorm(N,mv,Sigma)
+apply(X,2,mean)
+apply(X,2,sd)
+cor(X)
+```
+
+## Wishart distribution
+
+Used for creating random covariance matrixes.
+
+`rWishart(n,df,Sigma)/df`
+
+Like $\chi^2$, but for correlation matrixes instead of variances.

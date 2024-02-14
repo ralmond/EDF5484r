@@ -1,0 +1,63 @@
+---
+title: "KL reference distribution:  A simulation experiment"
+output: html_notebook
+---
+
+# Kullback-Leibler Divergence
+
+This is a measure of the distance between two probability 
+distributions.  For discrete variables:
+
+$$D_{KL}(\boldsymbol{p} \| \boldsymbol{q}) =
+\sum_{k} p_k \log \left (\frac{p_k}{q_k} \right)$$
+
+```{r}
+dkl <- function (p,q) {
+  #stopifnot(length(p)==length(q))
+  #stopifnot(all(p>-0),all)
+  sum(ifelse(p==0,0,-p*log(q/p)))
+}
+```
+
+## The KL divergence for two probability estimates
+
+```{r}
+p0 <- c(.25,.5,.25)
+X <- c(33,33,33)
+qq0 <- X/sum(X)
+dkl(p0,qq0)
+```
+Simulate data from $p_0$ to get a reference distribution.
+
+
+## Setting up a simulation
+
+```{r}
+B <- 1000  ## Number of simulations
+N <- 99 ## Sample size for each sample.
+simsamp <- rmultinom(B,N,p0)
+simsamp[,1:10]
+```
+
+
+```{r}
+sampdkl <- sapply(1:B, function(b) {
+  qq<- simsamp[,b]/sum(simsamp[,b])
+  dkl(p0,qq)
+})
+```
+
+```{r}
+hist(sampdkl)
+```
+
+## Approximate P-value
+```{r}
+sum(sampdkl>dkl(p0,qq))/B
+```
+## Critical value
+
+```{r}
+quantile(sampdkl,probs=c(.9,.95,.99))
+```
+
