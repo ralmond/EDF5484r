@@ -63,18 +63,28 @@ file.path("Assignments","problemcs1.sav")
 ```
 
 `sprintf(template, var1, var2, ...)` slots the variables into the
-templates. Common templates `%s` -- string, `%d` integer, `%f` floating
-point, `%e` floating point with exponential, `%g`, pick one of f or e.
+templates. Common templates:
+
+-   `%s` string
+-   `%d` integer
+    -   `%nd` where n is a number is integers of a certain length
+    -   `%0nd` pads front with zeros.
+-   `%f` floating point, `%m.nf` m digits before the decimal, and m
+    after
+-   `%e` floating point with exponential (scientific notation)
+-   `%g` use `%f` it the number fits, or `%e` if not.
 
 ```{r}
-sprintf("Template text: s:%s, d:%d, f:%f, e:%e, g:%g \n",
-   "Hi", 7, 3.14, 1000000000000, 30042)
+sprintf("Template text: s:%s, d:%03d, f:%f, e:%e, g:%g gg:%g\n",
+   "Hi", 7, 3.14, 1000000000000, exp(10), exp(100))
    #\n is a newline
 ```
 
 ## Matrixes, Arrays, Data Frames and Tibbles
 
 ## Matrixes
+
+Matrixes and arrays are vectors with `dim` attribute.
 
 -   `matrix()` and `array()`
 
@@ -103,6 +113,7 @@ case the array is treated as a vector, or one argument per dimension.)
 
 ```{r}
 mat <- matrix(1:12,3,4)
+mat
 mat[7]
 mat[2,4]
 ```
@@ -146,13 +157,17 @@ C, python, ... use row-major order.
 -   `tibble`
     -   row names discouraged
     -   `drop=FALSE`, and `pull()`
+-   S3 objects are lists of fields
+    -   `class` attribute tells R how to treat them.
+
+Use `data.frame()` like `list()` to create data frames.
 
 ## Random numbers.
 
 ### Distributions in the `stats` package.
 
 -   `dXXX(x)` -- `x` is data value, returns density
--   `pXXX(q)` -- `q` is quantile, returns (lower tail) propbability
+-   `pXXX(q)` -- `q` is quantile, returns (lower tail) probability
 -   `qXXX(p)` -- `p` is (lower tail) probability, returns quantile
 -   `rXXX(n)` -- `n` is number of samples
 
@@ -164,11 +179,102 @@ Commonly used:
 -   `runif()` -- uniform
 -   `rt()` -- t-distribution
 
+Less commonly used: `rbeta`, `rgamma`, `rbinom`, `rmultinom`, `dlnorm`,
+`rchisq`, `rexp`, `rf`, `rgeom`, `rhyper`, `rnbinom`, `rweibull`
+
+```{r}
+help("Distributions")
+```
+
+See <https://cran.r-project.org/view=Distributions>
+
 ### Sampling
 
--   `sample()` and `sample.int()`
+-   `sample(x, size, replace=FALSE, prob=NULL)` and
+    `sample.int(n, size=n, replace=FALSE, prob=NULL)`
 
--   `factor()` and `ordered()`
+-   `x` is list of possible values, for `sample.int` this is `1:n`
+
+-   `size` is number of samples to draw.
+
+-   `replace` is should drawing be done with replacement
+
+-   `prob` if supplied allows for non-uniform distributions.
+
+-   `factor()` and `ordered()` -- Often want to sample from a list of
+    factors.
+
+```{r}
+N <- 10
+skill1 <- sample(ordered(c("High","Medium","Low"),
+                         levels=c("Low","Medium","High")),
+                 N,replace=TRUE)
+skill1
+```
+
+### Bootstrap
+
+Sample rows from a data frame (or matrix or tibble)
+
+-   Smaller data for testing.
+
+```{r}
+N <- 50
+irissamp <- iris[sample.int(nrow(iris),N,replace=FALSE),]
+irissamp
+```
+
+-   Split data into training and test.
+
+```{r}
+Ntest <- round(nrow(iris)/3)
+test <- sample.int(nrow(iris),Ntest)
+iristest <- iris[test,]
+iristrain <- iris[-test,]  # - index means don't select these arguments.
+```
+
+-   Bootstrap (repeatedly sample to approximate sampling disribution)
+
+```{r}
+B <- 1000  ## Number of bootstraps
+bssamp <- sapply(1:B, function(b) {
+  #sapply with integer value will loop.
+  irissamp <- iris[sample.int(nrow(iris),nrow(iris),replace=TRUE),]
+  ## Make sure you have the replacement!
+  cor(irissamp$Sepal.Length,irissamp$Sepal.Width)
+})
+hist(bssamp)
+mean(bssamp)
+sd(bssamp)
+```
+
+```{r}
+cor.test(iris$Sepal.Length,iris$Sepal.Width)
+quantile(bssamp,c(.025,.975))
+```
+
+### Mixture Models
+
+Some percentage of values from two different distributions.
+
+$1-\epsilon$ come from $N(\mu_1,\sigma_1)$ $\epsilon$ come from
+$N(\mu_2,\sigma_2)$
+
+```{r}
+mus <- c(0,0)
+sigs <- c(1,3)
+eps <- .05
+N <- 1000
+X <- ifelse(runif(N)<eps,
+            rnorm(N,mus[2],sigs[2]),
+            rnorm(N,mus[1],sigs[1]))
+hist(X)
+
+```
+
+### Repeatable sequences
+
+`set.seed()`
 
 ## Multivariate Models
 
@@ -186,7 +292,7 @@ $$ Y = \sigma_Y\left ( \rho_{xy} (X-\mu_X)/\sigma_X + \sqrt{1-\rho_{xy}^2} \epsi
 mx <- 3; my<- 10
 sx <- 1; sy<-2.5
 rxy <- .6
-N <- 10
+N <- 100
 
 X <- rnorm(N,mx,sx)
 Y <- sy*(rxy*(X-mx)/sx + sqrt(1-rxy^2)*rnorm(N)) + my
@@ -232,21 +338,46 @@ chol(R)
 Sigma <- diag(sv)%*%R%*%diag(sv)
 Sigma
 ```
+Method 1:  rmvnorm
+
+```{r}
+N <- 10
+X <- mvtnorm::rmvnorm(N,mv,Sigma)
+cat("Means:\n")
+mv
+round(apply(X,2,mean),2)
+cat("SDs:\n")
+sv
+round(apply(X,2,sd),3)
+cat("Correlations:\n")
+R
+round(cor(X),3)
+```
+
+
 
 ```{r}
 A <- chol(Sigma)
 N <- 10
-X <- matrix(rnorm(N*nrow(A)),ncol=nrow(A))%*%A + mv
-apply(X,2,mean)
-apply(X,2,sd)
-cor(X)
+X <- sweep(matrix(rnorm(N*nrow(A)),ncol=nrow(A))%*%A,2,mv,"+")
+cat("Means:\n")
+mv
+round(apply(X,2,mean),2)
+cat("SDs:\n")
+sv
+round(apply(X,2,sd),3)
+cat("Correlations:\n")
+R
+round(cor(X),3)
 ```
 
 ```{r}
 X <- mvtnorm::rmvnorm(N,mv,Sigma)
-apply(X,2,mean)
-apply(X,2,sd)
-cor(X)
+round(apply(X,2,mean),2)
+round(apply(X,2,sd),3)
+cat("Covariance")
+Sigma
+round(cov(X),3)
 ```
 
 ## Wishart distribution
@@ -256,3 +387,8 @@ Used for creating random covariance matrixes.
 `rWishart(n,df,Sigma)/df`
 
 Like $\chi^2$, but for correlation matrixes instead of variances.
+
+```{r}
+rWishart(3,10,Sigma)
+```
+
