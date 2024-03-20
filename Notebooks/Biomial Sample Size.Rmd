@@ -1,0 +1,27 @@
+---
+title: "Binomial Sample size"
+output: html_notebook
+---
+Calculates SE of diff.
+$$z = \sqrt{2*p*(1-p)/n}$$
+Calculates sample size needed for default s.e.
+$$n = 2*p*(1-p)/z^2$$
+
+```{r}
+sediff <- function(n,p) {
+  sqrt(2*p*(1-p)/n)
+}
+sampdif <- function(p,z) {
+  2*p*(1-p)/z^2
+}
+```
+
+Target of 5% se of diff, how big does samples size (in each arm of study) need to be.
+```{r}
+curve(sampdif(x,.05),xlim=c(.1,.9))
+```
+How big is the se as a function of p for fixed sample size.
+```{r}
+curve(sediff(200,x),xlim=c(.1,.9))
+```
+
