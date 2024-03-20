@@ -1,0 +1,17 @@
+---
+title: "Case Study 4:  3d Graphics"
+format: revealjs
+---
+
+
+```{r}
+library(tidyverse)
+library(DescTools)
+library(plotly)
+library(rgl)
+library(scatterPlotMatrix)
+```
+
+https://cran.r-project.org/web/packages/scatterPlotMatrix/vignettes/introduction-to-scatterplotmatrix.html
+
+https://r-graph-gallery.com/3d_scatter_plot.html

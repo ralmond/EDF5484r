@@ -1,0 +1,355 @@
+---
+title: "Case Study 6, Logistic Regression"
+format: html
+---
+
+# Generalized Linear Models
+
+## GLM families
+
+-   *Distribution* -- A probability distribution $P(\boldsymbol{Y}|\boldsymbol{\mu},\boldsymbol{\nu})$
+    -   $\boldsymbol{\mu} = E[\boldsymbol{Y}|\textbf{X}]$ -- expected value
+    -   $\tau$ is a scale parameter (e.g., variance)
+-   *Linear Predictor* -- $\boldsymbol{\eta} = \textbf{X}\boldsymbol{\beta}$
+-   *Link Function* -- $g(\boldsymbol{\mu}) = \boldsymbol{\eta}$, or $\boldsymbol{\mu} = g^{1}(\boldsymbol{\mu})$
+-   *Variance Function* -- $\boldsymbol{\nu} = V(\boldsymbol{\mu},\tau)$, where $\tau$ is a parameter estimated from the data.
+
+## Example: Logistic Regressions
+
+-   *Distribution*: Binomial distribution, with parameter $p$. Expected value is $p$ and variance is $p(1-p)$.
+
+-   *Linear Predictor*: $\boldsymbol{\eta} = \textbf{X}\boldsymbol{\beta}$
+
+-   *Link Function*: Logit (log odds) function. $\boldsymbol{p} = \text{logit}^{-1}(\boldsymbol{\eta})$.
+
+$$ \text{logit}(p) = \ln \frac{p}{1-p}$$
+
+```{r}
+curve(psych::logit(x),xlim=c(0,1))
+```
+
+Its inverse is the *logistic* function
+
+$$ \text{logit}^{-1}(x) = \frac{1}{1+\exp(-x)}$$
+
+```{r}
+curve(psych::logistic(x),xlim=c(-6,6))
+```
+
+-   *Variance* is $p(1-p)$
+
+## Families
+
+-   `gaussian(link="identity")` -- Ordinary Regression
+-   `binomial(link="logit")` -- Logistic Regression: True/False
+-   `binomial(link="probit")` -- Probit Regression: True/False
+-   `poisson(link="log")` -- Loglinear models: Contingency Tables
+
+`glm(model,data,family)`
+
+# Heart Data
+
+This example is based on a study by @janosi1989 and recorded in the UCI Machine Learning Repository [@murphy1992]. The direct link is: <https://archive.ics.uci.edu/dataset/45/heart+disease>
+
+```{r Rpacks}
+library(tidyverse)
+```
+
+Read in the Cleveland data set from @janosi1989. The `heart.features` is information about the coding from the web site.
+
+```{r DownloadData}
+
+heart.features <- list(
+  Age=numeric(),
+  Sex=c(Male=1,Female=0),
+  CP=c(TypicalAnginal=1, AtypicalAnginal=2, NonAnginal=3, Asymptomatic=4),
+  trestbps=numeric(),
+  chol=numeric(),
+  fbs=c(high=1,normal=0),
+  restecg=c(Normal=0, STTabnormality=1, LeftVentricularHypertrophy=2),
+  thalach=numeric(),
+  exang=c(Yes=1, No=0),
+  oldpeak=numeric(),
+  slope=c(down=1, flat=2, up=3),
+  ca=c(Zero=0, One=1, Two=2, Three=3, Four=4),
+  thal=c(Normal=3, FixedDefect=6, ReversibleDefect=7),
+  health=c(Healthy=0, S1=1, S2=2, S3=3, S4=4)
+)
+
+cleveland <- read_csv("processed.cleveland.csv",
+                      col_names=names(heart.features),
+                      na="?")
+cleveland
+```
+
+```{r recode}
+for (f in names(heart.features)) {
+  if (length(heart.features[[f]])>0L) {
+    cleveland[[f]] <- factor(cleveland[[f]],heart.features[[f]],
+                             names(heart.features[[f]]))
+  }
+}
+
+cleveland
+```
+
+Recode Healthy as binary
+
+```{r}
+cleveland <- mutate(cleveland,disease=health!="Healthy")
+summary(cleveland)
+```
+
+## Question 1: How does risk vary by age
+
+```{r}
+ggplot(cleveland,aes(x=Age,y=as.numeric(disease))) + geom_point(position="jitter") + geom_smooth()
+```
+
+```{r}
+ggplot(cleveland,aes(x=Age,y=as.numeric(disease))) + 
+  geom_point(position=position_jitter(width=.4,height=.1)) + 
+  geom_smooth()
+```
+
+```{r}
+cleveland <- mutate(cleveland,agecat = cut(Age,c(0,35,40,45,50,55,60,65,70,100)))
+ptab <- table(cleveland$agecat,cleveland$disease)
+ptab
+```
+
+```{r}
+probs <- ptab[,"TRUE"]/rowSums(ptab)
+probs
+```
+
+```{r}
+seprobs <- sqrt(probs*(1-probs)/rowSums(ptab))
+seprobs
+```
+
+Calculate
+
+1\) x center of error bar
+
+2\) upper and lower bounds of error bar.
+
+```{r}
+xage <- 32.5+5*(0:8)
+binprobs <-cbind(xage,probs,seprobs,lb=probs-2*seprobs,
+                 ub=probs+2*seprobs)
+print(binprobs,digits=3)
+```
+
+```{r}
+ggplot(cleveland,aes(x=Age,y=as.numeric(disease))) + 
+  geom_point(position=position_jitter(width=.4,height=.1)) +
+  geom_errorbar(data=as.data.frame(binprobs),mapping=aes(x=xage,y=probs,ymin=lb,ymax=ub))
+```
+
+## Logistic Regression
+
+```{r}
+lr1 <- glm(disease~Age,data=cleveland,family=binomial())
+lr1
+```
+
+```{r}
+summary(lr1)
+```
+
+Can test if the model does "significantly" better than the null model by looking at difference between Null Deviance and Residual Deviance. This has chi-square distribution with d.f. equal to number of parameters other than intercept.
+
+```{r}
+lr1$null.deviance-lr1$deviance
+1-pchisq(15,1)
+
+```
+
+Pseudo R-squared (method 1)
+
+```{r}
+(lr1$null.deviance-lr1$deviance)/lr1$null.deviance
+```
+
+```{r}
+age1 <- 35:70
+risk <- DescTools::LogitInv(coef(lr1)[1]+age1*coef(lr1)[2])
+risktab <- data.frame(age=age1,risk=risk)
+head(risktab)
+```
+
+```{r}
+ggplot(cleveland,aes(x=Age,y=as.numeric(disease))) + 
+  geom_point(position=position_jitter(width=.4,height=.1)) +
+  geom_line(data=risktab,aes(x=age,y=risk))
+```
+
+```{r}
+curve(DescTools::LogitInv(coef(lr1)[1]+x*coef(lr1)[2]),xlim=c(0,100))
+```
+
+```{r}
+plot(lr1)
+```
+
+```{r}
+binprobs <- as.data.frame(binprobs)
+binprobs$exp <- DescTools::LogitInv(coef(lr1)[1]+xage*coef(lr1)[2])
+print(binprobs,digits=3)
+```
+
+```{r}
+binprobs$resid <- binprobs$probs-binprobs$exp
+binprobs$sresid <- binprobs$resid/binprobs$seprobs
+names(binprobs)[1] <- "xage"
+round(binprobs,3)
+```
+
+```{r}
+ggplot(cleveland,aes(x=Age,y=as.numeric(disease))) + 
+  geom_point(position=position_jitter(width=.4,height=.1)) +
+  geom_line(data=risktab,aes(x=age,y=risk)) +
+  geom_errorbar(data=as.data.frame(binprobs),mapping=aes(x=xage,y=probs,ymin=lb,ymax=ub))
+```
+
+## Interpreting the coefficients
+
+```{r}
+logisticCurve <- function (x,glmm) {
+  res<- DescTools::LogitInv(coef(glmm)[1]+x*coef(glmm)[2])
+  names(res) <-NULL
+  res
+}
+cat("Risk at age 0 is", round(logisticCurve(0,lr1),3),"\n")
+cat( "Risk at age",round(mean(cleveland$Age),1), "is",
+ round(logisticCurve(mean(cleveland$Age),lr1),3),"\n")
+```
+
+Dividing slope by 4 gives us the amount that one unit change in X will change probability of Y around the center of the distribution. (This is an upper bound.)
+
+```{r}
+coef(lr1)[2]/4
+cat( "Risk at age",round(mean(cleveland$Age),1), "is",
+ round(logisticCurve(mean(cleveland$Age),lr1),3),"\n")
+cat( "Risk at age",round(mean(cleveland$Age),1)+1, "is",
+ round(logisticCurve(mean(cleveland$Age)+1,lr1),3),"\n")
+```
+
+## Adding a second factor
+
+```{r}
+ggplot(cleveland,aes(x=Age,y=as.numeric(disease),color=Sex)) + geom_point(position=position_jitter(width=.4,height=.1)) + geom_smooth()
+```
+
+```{r}
+lr2 <- glm(disease ~ Age + Sex,data=cleveland,na.action = na.omit,
+           family=binomial())
+summary(lr2)
+```
+
+```{r}
+age1 <- 35:70
+riskm <- DescTools::LogitInv(coef(lr2)[1]+age1*coef(lr2)[2])
+riskf <- DescTools::LogitInv(coef(lr2)[1]+age1*coef(lr2)[2] + coef(lr2)[3])
+risktab <- data.frame(age=rep(age1,2),
+                      sex=rep(c("male","female"),each=length(age1)),
+                      risk=c(riskm,riskf))
+risktab
+```
+
+```{r}
+ggplot(cleveland,aes(x=Age,y=as.numeric(disease),color=Sex)) + 
+  geom_point(position=position_jitter(width=.4,height=.1)) +
+  geom_line(data=risktab,aes(x=age,y=risk,color=sex))
+```
+
+```{r}
+lr3 <- glm(disease ~ Age * Sex,data=cleveland,na.action = na.omit,
+           family=binomial())
+summary(lr3)
+```
+
+## Using the rms package
+
+```{r}
+library(rms)
+lr3r <- lms(disease ~ Age * Sex,data=cleveland,na.action = na.omit)
+lr3r
+```
+
+# Model Search
+
+```{r}
+names(cleveland)
+```
+
+```{r}
+heartmin <- disease ~ Age*Sex
+heartmax <- disease ~ Age*Sex + CP + trestbps + chol + fbs + restecg + ca
+clevelandAll <- select(cleveland,all_of(c("disease","Age","Sex",
+                                          "CP","trestbps","chol",
+                                          "fbs","restecg","ca"))) |>
+  na.omit()
+```
+
+```{r}
+lrbase <- glm(heartmin,clevelandAll,family=binomial())
+lrbest <- step(lrbase,list(lower=heartmin,upper=heartmax),trace=2)
+
+```
+
+```{r}
+summary(lrbest)
+```
+
+$b_{age} = .018 (.023), z=.76, p=.44$
+
+```{r}
+LogitInv(coef(lrbest)["(Intercept)"]+
+           coef(lrbest)["Age"]*mean(clevelandAll$Age)+
+           coef(lrbest)["CPAsymptomatic"]*c(0,1))
+```
+
+```{r}
+lrnoca <- update(lrbest,~.-ca)
+summary(lrnoca)
+```
+
+```{r}
+diffchi2 <- deviance(lrnoca) - deviance(lrbest)
+diffchi2
+1-pchisq(diffchi2,3)
+```
+
+The colored floroscopy test (`ca`) significantly improved the fit of the model $X^2(3)=39.7, p<.001$
+
+```{r}
+riskfactors <- data.frame(Age=median(cleveland$Age),
+                          Sex=rep(unique(cleveland$Sex),each=16),
+                          CP=rep(rep(unique(cleveland$CP),each=4),2),
+                          ca=rep(unique(clevelandAll$ca),8))
+riskfactors$trestbps <- median(clevelandAll$trestbps)
+riskfactors
+```
+
+```{r}
+#predict(lrbest,riskfactors)
+riskfactors$risk <- LogitInv(predict(lrbest,riskfactors))
+riskfactors
+```
+
+```{r}
+predict(lrbest,riskfactors,se.fit=TRUE)
+```
+
+```{r}
+pred <- predict(lrbest,riskfactors,se.fit=TRUE)
+pred$lb <- pred$fit-2*pred$se.fit
+pred$ub <- pred$fit+2*pred$se.fit
+riskfactors$risk <- round(LogitInv(pred$fit),3)
+riskfactors$lrisk <- round(LogitInv(pred$lb),3)
+riskfactors$urisk <- round(LogitInv(pred$ub),3)
+riskfactors
+
+```

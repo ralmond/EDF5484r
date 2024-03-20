@@ -1,0 +1,402 @@
+---
+title: "ACED Simple Regression"
+format: pdf
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+```{r library}
+library(DescTools)
+library(tidyverse)
+```
+
+# ACED Data
+
+```{r loadACEDnoNA}
+ACEDextract <- read_csv("ACED_extract1.csv",na="-999")
+ACEDextract$Session <- factor(ACEDextract$Session)
+ACEDextract$Cond_code <- factor(ACEDextract$Cond_code)
+ACEDextract$Sequencing <- factor(ACEDextract$Sequencing)
+ACEDextract$Feedback <- factor(ACEDextract$Feedback)
+ACEDextract$Gender <- factor(ACEDextract$Gender)
+ACEDextract$Race <- factor(ACEDextract$Race,1:8)
+ACEDextract$Level_Code <- factor(ACEDextract$Level_Code)
+```
+
+```{r mutate}
+ACEDextract %>%
+  mutate(gain=post_scaled-pre_scaled) ->
+  ACEDextract
+```
+
+## Research Questions
+
+In this case study we will address the first research question.
+
+1.  Do the pretest, posttest and internal game measures measure the same
+    thing? (Validity and Reliability)
+
+# Making Scatterplots
+
+Use `geom_point()` with `ggplot()` to make a scatterplot.
+
+## Scatterplot
+
+Here is a simple scatterplot.
+
+```{r scatterplot}
+
+EAPxCorrect <- ggplot(ACEDextract,aes(x=Correct,y=EAP.sgp)) +
+  geom_point()
+EAPxCorrect
+```
+
+## Adding lines and smooths
+
+The function `geom_smooth()` adds a smooth line.
+
+A few key arguments:
+
+-   `method` -- "lm", "loess", "glm", "gam"
+-   `formula` -- This allows specifying other kinds of curves.
+-   `na.rm` -- Logical, if `TRUE` then suppresses warning about NAs
+-   `se` -- Logical, default `TRUE`, should standard errors be plotted.
+
+```{r smoothline}
+EAPxCorrect + geom_smooth(method="lm",se=FALSE)
+EAPxCorrect + geom_smooth(method="lm")
+EAPxCorrect + geom_smooth(method="loess")
+```
+
+## Jittering
+
+When the data are integers (as in the count), sometimes points plot on
+top of each other.
+
+Jittering (adding a bit of random noise) can help.
+
+```{r jittX}
+ggplot(ACEDextract,aes(x=Correct,EAP.sgp)) +
+  geom_point(position="jitter")
+```
+
+## Coloring points
+
+Attach a factor variable to
+
+-   `color` (line color) or `fill` (interior color)
+
+-   `shape` shape of plotting symbol
+
+-   `linetype` -- type of the line (solid, dotted, dashed, &c).
+
+Note: color can be a problem if (a) printing graph in black and white,
+or (b) show to somebody with limited color perception (about 8% of the
+population). Try to pair color with another aesthetic (e.g., shape or
+linetype).
+
+```{r colors}
+ggplot(ACEDextract,aes(x=Correct,EAP.sgp,color=Level_Code,
+                       shape=Level_Code)) +
+  geom_point()
+```
+
+# Calclulating a correlation
+
+## Var and Cor
+
+```{r var}
+var(ACEDextract$Correct,ACEDextract$EAP.sgp)
+cor(ACEDextract$Correct,ACEDextract$EAP.sgp)
+select(ACEDextract,starts_with("EAP")) %>% cor()
+```
+
+## Handling missing data
+
+Add `use="complete.obs"` or `use="pairwise.complete.obs"`
+
+```{r varNA}
+var(ACEDextract$Correct,ACEDextract$EAP.sgp,use="complete.obs")
+cor(ACEDextract$Correct,ACEDextract$EAP.sgp,use="complete.obs")
+select(ACEDextract,starts_with("EAP")) %>% cor(use="pairwise.complete.obs")
+```
+
+## Biserial and Polyserial correlations
+
+polychor::polychor
+
+## Kendal's Tau-b
+
+`DescTools::KendalTauB`
+
+# Fitting a Linear Model
+
+The `lm()` function fits a linear model.
+
+It returns an *object* of class "lm".
+
+Can do interesting things with the object.
+
+## Formulas
+
+The first argument to `lm()` is a formula.
+
+A formula looks like `y ~ x`, where both $x$ and $y$ can be expressions
+with multiple variables.
+
+`~` is a special character which makes a formula.
+
+`y` is the dependent variable (what we want to predict)
+
+`x` is the independent variable (what we are going to use to make the
+prediction)
+
+Using the example above, `EAP.sgp ~ Correct`.
+
+Generally, it will be the name of a variable, either in the data set or
+in the global environment.
+
+Can also add a transformation, e.g., `log(x)` or `sqrt(x)`.
+
+Sometimes use a `.` for special purposes.
+
+## Other arguments of `lm()`
+
+-   `data` -- which data set are we using. Name of the data set, or "."
+    if the data set is being piped in with "%\>%.
+
+-   `subset` (optional) -- either a vector of cases (row numbers) to
+    use, or a logical vector same as number of rows in data which
+    selects the cases to use.
+
+Also can use `filter()` command on data before `lm()`
+
+-   `weights` -- normally not used, but support complex survey designs.
+
+-   `na.action` -- What to do with missing values.
+
+    -   "na.fail" -- Generate an error
+    -   "na.omit" -- Removes the missing values.
+    -   "na.exclude" -- Removes the missing values, but pads the output
+        so that the missing values can be predicted.
+    -   "na.pass" -- passes the missing values through (result is likely
+        to be `NA`, so usually not useful).
+
+Can globally set the default by using `options()`
+
+```{r optionsDefault}
+options("na.action")
+options(na.action=na.fail)
+```
+
+```{r lmExample}
+try(
+lm_EAPxCorrect <- lm(EAP.sgp~Correct, data=ACEDextract)
+)
+```
+
+```{r lmExampleNAex}
+lm_EAPxCorrect <- lm(EAP.sgp~Correct, data=ACEDextract,
+                     na.action="na.exclude")
+```
+
+## Summaries
+
+The result of running `lm` is an S3[^1] object of class "lm".
+
+[^1]: S3 objects, so called because they are described in the 3rd S
+    book, Chambers and Hastie (1992) are lists with a special class
+    attribute.
+
+```{r classlm}
+class(lm_EAPxCorrect)
+```
+
+Generic functions do things slightly differently based on the, class of
+the \[first\] argument.
+
+Methods of S3 generic functions are named `function.class`.
+
+-   `print.lm` -- `print()` is an important generic function. The
+    `print()` function is called when you just type the name of a
+    variable in the console.
+
+```{r printlm}
+lm_EAPxCorrect
+```
+
+May want to change the `digits` argument.
+
+```{r printlm3}
+print(lm_EAPxCorrect,digits=3)
+```
+
+-   `summary.lm` -- The `lm` method of the summary function gives the
+    statistics you commonly see in SPSS output.
+
+```{r summarylm}
+summary(lm_EAPxCorrect)
+```
+
+-   `anova.lm` -- This gives the ANOVA table
+
+```{r anovalm}
+anova(lm_EAPxCorrect)
+```
+
+-   `plot.lm` -- This produces a number of diagnostic plots, more later.
+
+By default, the `plot.lm` method asks if you are ready before plotting
+the next plot. This is not necessary in RStudio, so add the option
+`ask=FALSE`.
+
+```{r plot}
+plot(lm_EAPxCorrect,ask=FALSE)
+```
+
+Note `help(plot)` gives help on the generic (any object) function, and
+`help(plot.lm)` gives help on the `lm` method for `plot`.
+
+## components
+
+An S3 object is basically just a list. To access its components use the
+`$` operator
+
+-   `coefficients` -- the slope and intercept
+
+-   `residuals` -- the vector of residuals
+
+-   `fitted.values` -- the vector of fitted values
+
+-   `df.residuals` -- the degrees of freedom of the residuals.
+
+```{r components}
+lm_EAPxCorrect$coefficients
+lm_EAPxCorrect$df.residual
+head(lm_EAPxCorrect$residuals)
+head(lm_EAPxCorrect$fitted.values)
+```
+
+-   `qr` -- The Q and R matrixes from the QR decomposition.
+
+## Extracting bits
+
+There are certain common extraction functions. (Usually better to use
+than the `$` operator.)
+
+-   `coef` -- coefficients
+
+-   `effects` -- effects, i.e., coefficients
+
+-   `vcov` -- variance/covariance matrix
+
+-   `nobs` -- number of \[non-missing\] observations.
+
+-   `variable.names` -- names of variables used in model.
+
+    ```{r}
+    coef(lm_EAPxCorrect)
+    variable.names(lm_EAPxCorrect)
+    ```
+
+## Extracting bits from the summary
+
+-   `summary()$sigma` -- residual sd/standard error of the estimate
+
+-   `summary()$df` -- degrees of freedom
+
+-   `summary()$fstatistic`
+
+-   `summary()$r.squared`, `summary()$adj.r.squared`
+
+    ```{r}
+    summary(lm_EAPxCorrect)$sigma
+    summary(lm_EAPxCorrect)$r.squared
+    ```
+
+## Prediction
+
+-   `predict`
+
+-   `fitted`
+
+-   `residuals`, `rstandard`, `rstudent`
+
+-   `simulate`
+
+## Diagnostics
+
+-   `dfbeta`, `dfbetas`, `dffits`
+
+-   `cooks.distance`
+
+-   `influence`
+
+-   `hatvalues`
+
+## Model Fit
+
+-   `logLik`
+
+-   `deviance`
+
+# Tasks
+
+1.  Make marginal summaries for the following variables:
+
+Correct,Incorrect,ElapsedTime,pre_scaled,post_scaled,EAP.sgp
+
+```{r}
+Desc(ACEDextract$Correct)
+
+```
+
+2.  Same as above, but break down by Level_code
+
+```{r}
+ACEDextract %>%
+  select(Correct,post_scaled,Level_Code) %>% 
+  na.omit() %>%
+  group_by(Level_Code) %>%
+  summarize(Correct.mean=mean(Correct),Correct.sd=sd(Correct),
+            Cor.skew=DescTools::Skew(Correct),Cor.kurt=DescTools::Kurt(Correct))
+
+```
+
+3.  Plot `Correct` against `Incorrect`. What is happening here?
+
+```{r}
+ggplot(ACEDextract,aes(x=Correct,y=Incorrect)) +geom_point(position="jitter")
+```
+
+4.  Plot `EAP.sgp` against `post_scaled`. What is the correlation?
+
+5.  Plot `pre_scaled` against `post_scaled`. What is the correlation?
+
+6.  Regress `post_scaled` against `EAP.sgp`. Is `EAP.sgp` (the internal
+    measure of ability from inside the game) a good predictor of
+    `post_scaled` (the external predictor)?
+
+```{r}
+lmPostxEAP <- lm(post_scaled~EAP.sgp,data=ACEDextract,na.action=na.exclude)
+summary(lmPostxEAP)
+```
+
+```{r}
+anova(lmPostxEAP)
+```
+
+## Regression Effect
+
+```{r regEffect}
+ggplot(ACEDextract,aes(x=pre_scaled,y=gain)) + geom_point() + geom_smooth(method="lm")
+```
+
+```{r}
+ggplot(ACEDextract,aes(x=pre_scaled,y=post_scaled)) + geom_point() + geom_smooth(method="lm")
+```
+
+```{r}
+plotly::ggplotly()
+```

@@ -1,0 +1,765 @@
+---
+title: "Case Study 5"
+format: pdf
+---
+
+```{r}
+library(tidyverse)
+library(GGally)
+library(plotly)
+library(DiagrammeR)
+```
+
+# Goal
+
+What is the effect of the study conditions on the relationship between the pre-test and posttest?
+
+# Normal Residuals
+
+```{r}
+normdat <- data.frame(x=rnorm(100),y=rnorm(100))
+plot(y~x,data=normdat)
+```
+
+# A little bit of TeX (LaTeX)
+
+$\text{\TeX}$ and $\text{\LaTeX}$
+
+## Commands & Groups
+
+-   `$` and `$$`
+-   `\` -- starts a command
+-   `{}` --- gives you a gruop
+
+## Subscripts and superscripts
+
+-   Subscript `_` $b_0$, $x_{ij}$
+-   Superscript `^` $R^2$, $X^{-1}$
+
+## Greek letters and other commands
+
+Greek letters are `\` followed by the name $\theta$, $\Theta$
+
+`\sqrt` $\sqrt{2\pi}$
+
+Note $\log$ (in roman type)
+
+## Sums and Products
+
+$$\sum_{i=1}^{N} x_i$$
+
+## Fractions
+
+$\frac{1}{2}$
+
+## Bold and roman
+
+`\text` to get roman `\textbf` or `\boldsymbol` to get bold.
+
+# Model Selection
+
+## Maximum Likelihood
+
+*Likelihood* is the probability of the data given the model and parameters.
+
+$$P(\boldsymbol{Y}|\textbf{X},{\cal M},\boldsymbol{\theta}) = 
+\prod P(Y_i | \boldsymbol{x}_i,{\cal M},\boldsymbol{\theta})$$ The *maximum likelihood* estimate of the parameters, $\hat{\boldsymbol{\theta}}$ is the values of the parameters that maximizes the likelihood.
+
+Often look at the *log likelihood*
+
+$${\cal L}(\boldsymbol{Y}|\textbf{X},{\cal M},\boldsymbol{\theta}) = 
+\sum \log P(Y_i | \boldsymbol{x}_i,{\cal M},\boldsymbol{\theta})$$
+
+For normal errors
+
+$\log{P(Y|X,\beta) \propto (Y-\hat{Y})^2}$
+
+For normal errors, MLE = Least Squares
+
+## Base and Saturated Models
+
+Base Model: Needs to have all variables related to our research question.
+
+Null Model: Just intercept
+
+`post_scaled ~ pre_scaled + Cond_code` (compare to without `Cond_code`)
+
+Other variables are to soak up variance.
+
+Maximum or Saturated Model: Model will all variables we might consider.
+
+`names(data)`
+
+## Forward Selection
+
+Start with Minimum Model
+
+Add variable with highest correlation with residuals.
+
+Look at change in $R^2$
+
+Stop when ~~no~~ minimal improvement.
+
+In R, use `add1()` or `update()`
+
+## Reverse Selection
+
+Start with saturated model.
+
+Drop terms with non-significant slopes.
+
+Stop just before fit becomes noticeably worse.
+
+In R use `drop1()` or `update()`
+
+## Nested Models and $F$-test
+
+Model 1 is nested in Model 2 ${\cal M}_1 \subset {\cal M}_2$ if every term in Model 1 is also in Model 2.
+
+Difference in log likelihoods has approximately chi-squared. For normal model we can do an ANOVA $F$-test.
+
+## Stepwise Regression
+
+Goes forwards and backwards, adding new variables and removing old ones. Usually defines an "F to enter" and "F to leave".
+
+# Evaluating Model Fit
+
+```{r}
+normdat <- data.frame(y=rnorm(100),x=rnorm(100),
+                      x1=rnorm(100),x2=rnorm(100))
+mod1 <- lm(y~x,normdat)
+mod2 <- lm(y~x+x1,normdat)
+mod3 <- lm(y~x+x1+x2,normdat)
+```
+
+## Adjusting R-squared
+
+```{r}
+summary(mod1)$r.squared
+summary(mod2)$r.squared
+summary(mod3)$r.squared
+```
+
+```{r}
+summary(mod1)$adj.r.squared
+summary(mod2)$adj.r.squared
+summary(mod3)$adj.r.squared
+```
+
+## Cross Validation
+
+Split data into *training* and *test* data.
+
+Do model search on training data
+
+Do hypothesis testing of test data.
+
+$K$-fold cross validation -- break data into $K$ groups. $K$ times fit to $K-1$ groups and test on the remaining ones (average over the $K$ times).
+
+Leave one out (LOO) -- $N$-fold cross validation.
+
+Three stage -- Split training data into training and test groups.
+
+## Deviance
+
+Deviance is $-2 \log \ \text{likelihood}=D$
+
+Want to pick model with smallest deviance.
+
+## AIC
+
+$$AIC=2p + D$$
+
+$p$ is number of parameters (predictors).
+
+Related to LOO Also called Mallow's $C_p$.
+
+## BIC
+
+$$BIC=p \ln(N) + D$$
+
+Related to minimum description length.
+
+Also, DIC, WAIC, ...
+
+## Box's Maxim
+
+Box (1987). "Essentially, all models are wrong, but some are useful. However, the approximate nature of the model must always be borne in mind..."
+
+Box (1976) "Since all models are wrong ..." "... the scientist cannot obtain the 'correct' one by excessive elaboration." "... the scientist must be alert to what is importantly wrong."
+
+"The map is not the terrain".
+
+## Occam's Window and Model Averaging
+
+Adrian Raftery's idea:
+
+Search for the best model, but keep the $k$ best models.
+
+In Bayesian framework, can create a posterior distribution over models.
+
+(Weighted) Average of predictions is better than prediction from any single model.
+
+# ACED model for non-control students
+
+```{r}
+library(tidyverse)
+library(DescTools)
+library(GGally)
+library(plotly)
+```
+
+# ACED Data
+
+```{r loadACEDnoNA}
+ACEDextract <- read_csv("ACED_extract1.csv",na="-999")
+ACEDextract$Session <- factor(ACEDextract$Session)
+ACEDextract$Cond_code <- factor(ACEDextract$Cond_code)
+ACEDextract$Sequencing <- factor(ACEDextract$Sequencing)
+ACEDextract$Feedback <- factor(ACEDextract$Feedback)
+ACEDextract$Gender <- factor(ACEDextract$Gender)
+ACEDextract$Race <- factor(ACEDextract$Race,1:8)
+ACEDextract$Level_Code <- factor(ACEDextract$Level_Code)
+
+```
+
+```{r}
+summary(ACEDextract)
+```
+
+Grab the non-control students
+
+```{r}
+ACEDexp <- filter(ACEDextract,Cond_code!="Control") %>%
+  na.omit() %>%
+  mutate(Cond_code=factor(case_match(Cond_code,
+                              "adaptive_acc"~"adaptive_acc",
+                              "adaptive_full"~"adaptive_full",
+                              "linear_full"~"linear_full")))
+summary(ACEDexp$Cond_code)
+summary(ACEDexp$Race)
+```
+
+Want to collapse 1, 4, 5, & 8 into other
+
+```{r recodeRace}
+ACEDexp <- mutate(ACEDexp,
+                  Race=factor(case_match(as.numeric(Race),
+                                         7~"Reference",
+                                         6~"Focal1",
+                                         3~"Focal2",
+                                         2~"Focal3",
+                                         c(1,4,5,8)~"Other")))
+ACEDextract <- mutate(ACEDextract,
+                  Race=factor(case_match(as.numeric(Race),
+                                         7~"Reference",
+                                         6~"Focal1",
+                                         3~"Focal2",
+                                         2~"Focal3",
+                                         c(1,4,5,8)~"Other")))
+
+summary(ACEDextract$Race)
+```
+
+## Minimum and Maximum Models
+
+```{r}
+minMod <- post_scaled ~ pre_scaled + Sequencing + Feedback
+names(ACEDexp)
+```
+
+```{r}
+maxmodel <- post_scaled ~ pre_scaled + Sequencing + Feedback + Gender + 
+  Race + Level_Code + EAP.sgp + EAP.cr + EAP.dt + EAP.eg + EAP.ext
+```
+
+## Method 1 -- add
+
+```{r}
+ACED1 <- lm(minMod,data=ACEDexp)
+summary(ACED1)
+AIC(ACED1)
+BIC(ACED1)
+cor(residuals(ACED1),as.matrix(select(ACEDexp,where(is.numeric))))
+```
+
+EAP.ext (extend sequence) has the highest correlation, so try adding this one next.
+
+```{r}
+ACED2 <- update(ACED1,.~.+EAP.ext)
+summary(ACED2)
+AIC(ACED2)
+BIC(ACED2)
+anova(ACED1,ACED2)
+```
+
+$$
+SS_{all} = SS_{mod1} + SS_{mod2-mod1} + SS_e
+$$
+
+Use `C(var,base=n)` to set group `n` as reference.
+
+```{r}
+ACED3 <- update(ACED2, .~.+C(Race,base=5))
+summary(ACED3)
+```
+
+```{r}
+cat("AIC mod2=",AIC(ACED2),"mod3=",AIC(ACED3),"\n")
+cat("BIC mod2=",BIC(ACED2),"mod3=",BIC(ACED3),"\n")
+anova(ACED1,ACED2,ACED3)
+```
+
+## Start with saturated model and remove
+
+```{r}
+ACEDm1 <- lm(maxmodel,ACEDexp)
+summary(ACEDm1)
+```
+
+```{r}
+ACEDm2 <- update(ACEDm1,.~.-EAP.dt)
+summary(ACEDm2)
+```
+
+## Stepwise Regression
+
+possible to do both forwards and backwards
+
+```{r}
+ACEDstep <- step(ACED2,list(lower=minMod,upper=maxmodel),
+                 trace=3)
+ACEDstep
+summary(ACEDstep)
+```
+
+# Earnings Data
+
+```{r}
+earnings <- read_csv("https://raw.githubusercontent.com/avehtari/ROS-Examples/master/Earnings/data/earnings.csv")
+summary(earnings)
+```
+
+```{r}
+earnings$male <- factor(earnings$male,labels=c("female","male"))
+earnings$ethnicity <- factor(earnings$ethnicity)
+earnings$smokenow <- factor(earnings$smokenow)
+summary(earnings)
+  
+```
+
+```{r}
+highlight_key(earnings) %>%
+  GGally::ggpairs(columns=1:5) %>%
+  ggplotly() %>%
+  highlight("plotly_selected")
+```
+
+```{r}
+ggplot(earnings,aes(y=earn,x=height)) + geom_point(position="jitter") + geom_smooth()
+```
+
+```{r}
+ggplot(earnings,aes(y=earn,x=height)) + scale_x_log10() + geom_point(position="jitter") + geom_smooth()
+```
+
+```{r}
+learn <- lm(log(earn+1) ~ height, data=earnings, na.action=na.omit)
+summary(learn)
+```
+
+```{r}
+lny = -4 + .19*c(66,67)
+exp(lny)
+```
+
+## Male--Female Interaction
+
+```{r}
+ggplot(earnings[earnings$earnk<350,],aes(y=earn,x=height,color=male)) + scale_x_log10() + geom_point(position="jitter") + geom_smooth()
+```
+
+```{r}
+learng <- lm(log(earn+1) ~ height + male, data=earnings, na.action=na.omit)
+summary(learng)
+```
+
+```{r}
+learngi <- lm(log(earn+1) ~ height * male, data=earnings, na.action=na.omit)
+summary(learngi)
+```
+
+```{r}
+oldpar <- par(mar=c(3,3,2,1), mgp=c(1.7,.5,0), tck=-.01)
+plot(c(55,80),c(0,log(200000)), type="n", xaxs="i", yaxs="i",
+  xlab="Height", ylab="log(earnings)", bty="l", main="Example of no interaction") 
+lines(c(55,80),coef(learng)['(Intercept)']+coef(learng)["malemale"] +
+        c(55,80)*coef(learng)["height"])
+lines(c(55,80),coef(learng)['(Intercept)']+
+        c(55,80)*coef(learng)["height"])
+text(62.5, coef(learng)['(Intercept)']+coef(learng)["malemale"] +
+        62.5*coef(learng)["height"], "Male")
+text(62.5, coef(learng)['(Intercept)']+
+        62.5*coef(learng)["height"], "Female")
+par(oldpar)
+```
+
+```{r}
+oldpar <- par(mar=c(3,3,2,1), mgp=c(1.7,.5,0), tck=-.01)
+plot(c(55,80),c(0,log(200000)), type="n", xaxs="i", yaxs="i",
+  xlab="Height", ylab="log(earnings)", bty="l", main="Example of interaction") 
+lines(c(55,80),coef(learngi)['(Intercept)']+coef(learngi)["malemale"] +
+        c(55,80)*(coef(learngi)["height"]+coef(learngi)["height:malemale"]))
+lines(c(55,80),coef(learngi)['(Intercept)']+
+        c(55,80)*coef(learngi)["height"])
+text(62.5, coef(learngi)['(Intercept)']+coef(learngi)["malemale"] +
+        62.5*(coef(learngi)["height"]+coef(learngi)["height:malemale"]), "Male")
+text(62.5, coef(learngi)['(Intercept)']+
+        62.5*coef(learngi)["height"], "Female")
+par(oldpar)
+```
+
+## Asbestos and cancer Example
+
+Example from Gelman, Hill & Vehtari, Chapter 1.
+
+```{r }
+oldpar <- par(mar=c(3,3,2,1), mgp=c(1.7,.5,0), tck=-.01)
+plot(c(0,12.5),c(0,.25), type="n", xaxs="i", yaxs="i",
+  xlab="Home radon exposure (pCi/L)", ylab="Probability of lung cancer", bty="l", main="Example of an interaction") 
+lines(c(0,20),.07409+c(0,20)*.0134)
+lines(c(0,20),.00579+c(0,20)*.0026)
+text(10, .07409+10*.0134 - .02, "Smokers")
+text(10, .00579+10*.0026 + .01, "Nonsmokers")
+par(oldpar)
+```
+
+```{r}
+DiagrammeR::grViz('
+digraph rs {
+  i [label="" shape="point"] 
+  radon -> i [arrowhead="none"]
+  i -> cancer
+  smoking -> i
+}
+')
+```
+
+```{r}
+DiagrammeR::grViz('
+digraph rs {
+  
+  radon -> cancer
+  smoking -> cancer
+}
+')
+```
+
+This is compatible with `cancer ~ asbestos + smoking` and `cancer ~ asbestos * smoking`
+
+This is a *moderator*
+
+# Moderators and Mediators
+
+## Path Diagram
+
+Nodes (vertices) represent variables.
+
+Arrows go from predictor to predicted; often used to represent hypothesized causes.
+
+## Mediation Model
+
+A mediator goes in between
+
+```{r}
+DiagrammeR::grViz('
+digraph abc {
+  rankdir="LR"
+  a->b->c
+}
+')
+```
+
+If $b$ is removed then $a \rightarrow c$
+
+Partial mediation
+
+```{r}
+DiagrammeR::grViz('
+digraph abc {
+  rankdir="LR"
+  a->b->c
+  a->c
+}
+')
+```
+
+## Moderators
+
+Moderators affect the strength of the relationship between two other variables:
+
+```{r}
+DiagrammeR::grViz('
+digraph rs {
+  rankdir="LR"
+  i [label="" shape="point"] 
+  a -> i [arrowhead="none"]
+  i -> c
+  b -> i
+  
+  aa -> cc
+  bb -> cc
+}
+')
+```
+
+## Hidden Variables
+
+```{r}
+DiagrammeR::grViz('
+digraph hidden {
+  rankdir="LR"
+  subgraph h1 {
+    H1
+    A1 -> C1
+  }
+  subgraph h2 {
+    A2 -> H2
+    H2 -> C2
+  }
+  subgraph h3 {
+    H3 -> A3
+    H3 -> C3
+  }
+}
+')
+```
+
+All three result in conclusions $A\rightarrow C$
+
+## Selection effect
+
+```{r}
+DiagrammeR::grViz('
+digraph se {
+  rankdir="LR"
+  subgraph s1 {
+    A1 -> C1
+    S1
+  }
+  subgraph s2 {
+    A2 -> C2 [style="invis"]
+    A2 -> S2 -> C2
+  }
+  subgraph h3 {
+    A3 -> C3
+    S3 -> C3
+  }
+}
+')
+```
+
+# Model Search
+
+```{r}
+names(earnings)
+```
+
+```{r}
+minMod <- log(earn+1) ~ male*education
+maxMod <- log(earn+1) ~ male*education + male*age + height + ethnicity + exercise + smokenow
+```
+
+## Standardize Variables
+
+```{r}
+summary(earnings)
+```
+
+```{r}
+sapply(earnings,is.factor)
+```
+
+```{r}
+facs <- sapply(earnings,is.factor)
+earningz <- earnings
+earningz[!facs] <- scale(earnings[!facs])
+summary(earningz)
+```
+
+Fit Baseline model
+
+```{r}
+earn1 <- na.omit(earningz)
+bearn <- lm(minMod,earn1,earn1$earnk<350,na.action=na.omit)
+summary(bearn)
+```
+
+```{r}
+bearnf <- step(bearn,list(lower=minMod,upper=maxMod),trace=2)
+```
+
+```{r}
+summary(bearnf)
+```
+
+# ACED Data
+
+Recall four conditions:
+
+-   Adaptive sequence, full feedback
+
+-   Adaptive sequence, accuracy feedback
+
+-   Linear sequence, full feedback
+
+-   Control
+
+Interested in difference is post-test (`post_scaled`).
+
+`post_scaled ~ Cond_code`
+
+But, there are differences in math ability before applying treatment.
+
+Force pretest (`pre_scaled`) into model to soak up the ability difference.
+
+`post_scaled ~ Cond_code + pre_scaled`
+
+$X=T+E$
+
+Alternative is to use gain score, `post_scaled - pre_scaled`
+
+This does not account for unreliability of measure.
+
+Last question: is there an interaction between condition and pretest?\`
+
+`post_scaled ~ Cond_code * pre_scaled`
+
+Aptitude--Treatment Interaction (ATI)
+
+```{r}
+ggplot(ACEDextract,aes(x=pre_scaled,y=post_scaled,color=Cond_code)) +
+  geom_point()+geom_smooth(method="lm")
+```
+
+```{r}
+ggplot(ACEDextract,aes(x=pre_scaled,y=post_scaled)) +
+  geom_point()+geom_smooth(method="lm")+facet_wrap(vars(Cond_code))
+``` 
+
+```{r}
+names(ACEDextract)
+levels(ACEDextract$Cond_code)
+```
+
+```{r}
+acedminmod <- post_scaled ~ C(Cond_code,base=3) + pre_scaled
+acedmaxmod <- post_scaled ~ C(Cond_code,base=3) * pre_scaled + Gender + Race + Level_Code
+```
+
+## Test for no interaction (ATI)
+
+```{r}
+ACEDex1 <- select(ACEDextract,all_of(c("post_scaled","pre_scaled","Cond_code",
+                                       "Gender","Race","Level_Code"))) %>%
+  na.omit()
+names(ACEDex1)
+acedbase <- lm(acedminmod,ACEDex1)
+summary(acedbase)
+```
+```{r}
+acedati <- lm(post_scaled ~ Cond_code * pre_scaled, ACEDex1)
+summary(acedati)
+```
+```{r}
+anova(acedbase,acedati)
+```
+
+```{r}
+ACEDex1 %>% mutate(control=Cond_code=="control") -> ACEDex1
+acedcont <- lm(post_scaled ~ control + pre_scaled,ACEDex1)
+summary(acedcont)
+```
+
+
+
+## Fit the Initial Model
+
+## Model Selection
+
+```{r}
+acedfinal <- step(acedbase,list(lower=acedminmod,upper=acedmaxmod),trace=2)
+```
+
+```{r}
+table(ACEDex1$Level_Code,ACEDex1$Race)
+```
+
+## Interpret the Final Model
+
+```{r}
+library(effects)
+help("effects")
+```
+
+
+```{r}
+eff.aced <- allEffects(acedbase)
+names(eff.aced)
+```
+
+```{r}
+coef(summary(acedbase))
+```
+
+```{r}
+effs <- as.data.frame(coef(summary(acedbase))[2:4,1:2])
+effs$condition <- factor(c("adaptive_acc","adaptive_full","linear_full"))
+effs$lb <- effs$Estimate - 2*effs$`Std. Error`
+print(effs,digit=3)
+```
+
+```{r}
+ggplot(effs,aes(x=condition,y=Estimate)) + geom_point() +
+  geom_errorbar(aes(ymin=Estimate-2*`Std. Error`,ymax=Estimate+2*`Std. Error`)) +
+  geom_hline(aes(yintercept=0))
+```
+```{r}
+coef(summary(acedfinal))
+```
+
+
+```{r}
+effs1 <- as.data.frame(coef(summary(acedfinal))[2:4,1:2])
+effs1$condition <- factor(c("adaptive_acc","adaptive_full","linear_full"))
+print(effs1,digit=3)
+```
+```{r}
+ggplot(effs1,aes(x=condition,y=Estimate)) + geom_point() +
+  geom_errorbar(aes(ymin=Estimate-2*`Std. Error`,ymax=Estimate+2*`Std. Error`)) +
+  geom_hline(aes(yintercept=0))
+
+```
+
+
+
+# Job Satisfaction Data
+
+This is the data set used for the first and second homework assignments. This shows how to read it into R.
+
+```{r}
+library(haven)
+```
+
+```{r}
+jobsat <- read_spss("../Homework/jobsat.sav")
+summary(jobsat)
+```
+
+```{r}
+ggplot(jobsat,aes(y=jobsatisfaction,x=stress)) + geom_point()
+```
+
+```{r}
+ggplot(jobsat,aes(y=jobsatisfaction,x=stress)) + geom_point(position="jitter")
+```

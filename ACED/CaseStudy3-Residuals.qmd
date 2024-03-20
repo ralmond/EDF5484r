@@ -1,0 +1,205 @@
+---
+title:  Case Study 3 -- Regression Diagnostics
+format:
+  pdf: 
+    header-includes:
+      - \usepackage{annotate-equations}
+---
+
+```{r}
+library(tidyverse)
+library(DescTools)
+library(plotly)
+```
+
+
+## Prediction Error
+
+$$
+s_{\hat{y}_p} = \sqrt{
+{s^2}
+\left [
+{\frac{1}{n}} +
+{\frac{(x_p - \bar{X})^2}{SS_{X}}} +
+{1}
+\right ]
+}
+$$
+## Car stopping distance
+
+Three models
+```{r}
+cars.lm <- lm(dist~speed,data=cars)
+cars.sqm <- lm(sqrt(dist)~speed,data=cars)
+cars.llm <- lm(log(dist)~speed,data=cars)
+```
+
+### Linear
+
+```{r}
+ggplot(cars,aes(x=speed,y=dist)) + geom_point() + geom_smooth()
+```
+If you have loaded the plotly package, you can get an interactive version of the last scatterplot with `ggplotly()` [I've turned it off here to generate pdf output, only works for html output.]
+
+```{r plotly, eval=FALSE}
+ggplotly()
+```
+
+
+```{r}
+plot(cars.lm)
+```
+
+## Square Root
+
+```{r}
+ggplot(cars,aes(x=speed,y=sqrt(dist))) + geom_point() + geom_smooth()
+```
+
+
+```{r}
+plot(cars.sqm)
+```
+
+## Log
+
+```{r}
+ggplot(cars,aes(x=speed,y=log(dist))) + geom_point() + geom_smooth()
+```
+
+
+```{r}
+plot(cars.llm)
+```
+
+# ACED Data
+
+```{r loadACEDnoNA}
+ACEDextract <- read_csv("ACED_extract1.csv",na="-999")
+ACEDextract$Session <- factor(ACEDextract$Session)
+ACEDextract$Cond_code <- factor(ACEDextract$Cond_code)
+ACEDextract$Sequencing <- factor(ACEDextract$Sequencing)
+ACEDextract$Feedback <- factor(ACEDextract$Feedback)
+ACEDextract$Gender <- factor(ACEDextract$Gender)
+ACEDextract$Race <- factor(ACEDextract$Race,1:8)
+ACEDextract$Level_Code <- factor(ACEDextract$Level_Code)
+```
+
+```{r mutate}
+ACEDextract %>%
+  mutate(gain=post_scaled-pre_scaled) ->
+  ACEDextract
+```
+
+
+# dfbetas
+
+
+
+
+```{r dfbetas}
+lm_PostxEAP <- lm(EAP.sgp~post_scaled,data=ACEDextract,na.action=na.exclude)
+dfb <- dfbeta(lm_PostxEAP)
+dfbs <- dfbetas(lm_PostxEAP)
+data.frame(dfbeta=dfb,dfbeta_scaled=dfbs) ->dfbb
+summary(dfbb)
+dfbb
+```
+
+```{r}
+boxplot(dfb[,"post_scaled"])
+```
+```{r}
+leverage <- cut(dfb[,"post_scaled"],quantile(dfb[,"post_scaled"],probs=c(0,.05,.95,1),na.rm=TRUE))
+summary(leverage)
+ggplot(ACEDextract,aes(y=pre_scaled,x=EAP.sgp,color=leverage)) + scale_color_discrete() + geom_point() + geom_smooth(method="lm") 
+```
+```{r plotLm}
+plot(lm_PostxEAP)
+```
+
+
+# Five Assumptions
+
+## 0.  Representative Sample
+
+### Missing Data
+
+## 1. Independent Observations
+
+### Time Series
+
+### Clusters
+
+## 2. Linear form
+
+### Transformations
+
+## 3. Homoscedasticiy -- Equal variances
+
+### Weighted regression
+
+### Transforming Y
+
+## 4. Normality of Residuals
+
+## 5. Subgroup differences
+
+### Color plots by group
+
+Do the groups mix?  
+
+Are the slopes similar?
+
+### Analysis of Covariance (look ahead)
+
+# Outliers and influential points.
+
+## Sensisitivity Analysis
+
+# Assignment
+
+For the regression `post_scaled ~ EAP.sgp`; answer the following questions?
+
+0. Are there problems with the sample?  Non-representative group?  Missing data? 
+
+Sample is a single middle school in a wealthy NJ district, so low generalizability to all middle schools.
+
+Most missing data is because control students did not get internal ACED measure (EAP.sgp)
+
+1. Is the distribution the same for everybody in the group?  Are there clusters?  Serial (time) dependencies?
+
+Grouped by classrooms.  (Might want to color by class.)
+
+```{r groupingGender}
+ggplot(ACEDextract,aes(x=EAP.sgp,y=post_scaled,color=Gender)) + geom_point()+geom_smooth()
+```
+
+```{r groupingClass}
+ggplot(ACEDextract,aes(x=EAP.sgp,y=post_scaled,color=Session)) + geom_point()
+```
+
+```{r ecologicalCorr}
+class1 <- data.frame(x=rnorm(25,5),y=rnorm(25,5),class="c1")
+class2 <- data.frame(x=rnorm(25,10),y=rnorm(25,10),class="c2")
+bothclasses <- rbind(class1,class2)
+bothclasses$class <- factor(bothclasses$class)
+ggplot(bothclasses, aes(x=x,y=y,color=class)) + geom_point()
+```
+
+
+
+
+2. Is the relationship mostly linear?  Will transforming X or Y make it more linear?
+
+3. Is the variance roughly the same for all values of $\hat Y$?  Will transforming $Y$ help?
+
+4. Are the residuals roughly normal?  Are there any outliers?  Will transforming $Y$ help?
+
+5. Are there any differences by subgroup?  
+
+In the ACED data set, pay attention to `Level_Code` and `Cond_code`.
+
+```{r groupingCondition}
+ggplot(ACEDextract,aes(x=EAP.sgp,y=post_scaled,color=Cond_code)) + geom_point()+geom_smooth()
+```

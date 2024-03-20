@@ -1,0 +1,48 @@
+---
+title: "ACED data Prep"
+output: html_notebook
+---
+
+Load CPT tools package, which has the data.
+
+This is not on CRAN, but at <https://ralmond.r-universe.dev/>.
+
+```{r load CPTtools}
+if (length(find.package("CPTtools",quiet=TRUE)) == 0L) {
+  install.packages("CPTtools",
+                   repos=c(ralmond="https://ralmond.r-universe.dev/",
+                           CRAN="https://cloud.r-project.org"))
+}
+library(CPTtools)
+library(tidyverse)
+```
+
+Join together the various data sets.
+
+```{r bigDaddy}
+extract <- ACED.prePost %>% 
+  left_join(ACED.scores,by=join_by(SubjID),suffix=c("",".y")) %>%
+  select(all_of(c("SubjID","Session","Cond_code","Sequencing",
+                  "Feedback","Correct","Incorrect","Reamaining",
+                  "ElapsedTime","Gender","Race","Level_Code",
+                  "pre_scaled","post_scaled","Form_Order")),
+         starts_with("EAP"),starts_with("P.sgp.."))
+extract
+```
+
+Write it out.  Use the -999 code for missing values.
+
+```{r extract1}
+write_csv(extract,"ACED_extract1.csv",na="-999")
+```
+
+## Equating subsample
+
+```{r equating}
+eqsamp <- select(ACED.prePost,all_of(c("SubjID", "Form_Order")),
+                 matches("(Pre|Post)?Corr",ignore.case=FALSE))
+eqsamp
+```
+```{r equate}
+write_csv(eqsamp,"ACED_extracteq.csv")
+```
