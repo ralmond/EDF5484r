@@ -270,8 +270,11 @@ It can also be done using the tidyverse `select` (multiple variables) of
 `pull` (single variable).
 
 ```{r select}
-select(ACEDextract,starts_with("P.sgp"))
+dplyr::select(ACEDextract,starts_with("P.sgp"))
 ```
+[I need to use `dplyr::select` to specify the `select` function from the tidyverse (dplyr) package,
+from `MASS::select`.]
+
 
 The output of `select` is a tibble, even if it is just a single
 variable. If we want a vector instead, use `pull`.
@@ -372,12 +375,19 @@ them.
 
 ```{r factors}
 ACEDextract$Session <- factor(ACEDextract$Session)
-ACEDextract$Cond_code <- factor(ACEDextract$Cond_code)
+ACEDextract$Cond_code <- factor(ACEDextract$Cond_code,
+                                c("adaptive_full", 
+                                  "adaptive_acc",
+                                  "linear_full",
+                                  "control"))
 ACEDextract$Sequencing <- factor(ACEDextract$Sequencing)
 ACEDextract$Feedback <- factor(ACEDextract$Feedback)
 ACEDextract$Gender <- factor(ACEDextract$Gender)
 ACEDextract$Race <- factor(ACEDextract$Race,1:8)
-ACEDextract$Level_Code <- factor(ACEDextract$Level_Code)
+ACEDextract$Level_Code <- factor(ACEDextract$Level_Code,
+                                 c("Academic","Honors", 
+                                   "Regular", "Part 1", "Part 2",
+                                   "ELL"))
 summary(ACEDextract)
 ```
 
