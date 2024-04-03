@@ -1,0 +1,177 @@
+---
+Title:  "Bayesian Statistics"
+---
+
+# Basics of Inference
+
+## Data, Parameters and Likelihoods
+
+-   $\boldsymbol{Y}$ -- data
+
+-   $\boldsymbol{\theta}$ -- parameters
+
+-   Classical (Maximum Likelihood) Approach
+
+    -   $f(\boldsymbol{Y}; \boldsymbol{\theta}) = {\cal L}(\boldsymbol{\theta})$
+    -   Parameter is fixed but unknown
+
+-   Bayesian Approach
+
+    -   $f(\boldsymbol{Y}| \boldsymbol{\theta})$
+    -   Parameter is either fixed and known,
+    -   or there is a (*prior*) distribution expressing uncertain state of knowledge
+    -   $f(\boldsymbol{\theta})$
+
+## MLE Approach
+
+-   Maximum likelihood estimate (MLE)
+
+$$\hat{\boldsymbol{\theta}} = \text{argmax}_{\boldsymbol{\theta}} f(\boldsymbol{Y}; \boldsymbol{\theta})$$ - Circumflex (hat) is used to indicate an MLE
+
+-   Often maximize the log-likelihood instead of the likelihood
+
+-   For normal data, the MLE is the same as the least squares estimate.
+
+-   Standard error can be found from the Fisher Information around the MLE.
+
+## Bayesian Approach
+
+-   Prior (Before seeing data): $f(\boldsymbol{\theta})$.
+-   Likelihood: $f(\boldsymbol{Y}|\boldsymbol{\theta})$
+-   Posterior (after seeing data):
+
+$$ f(\boldsymbol{\theta}|\boldsymbol{Y}) = 
+\frac{f(\boldsymbol{Y}|\boldsymbol{\theta})f(\boldsymbol{\theta})}{
+\int\!\cdots\!\int f(\boldsymbol{Y}|\boldsymbol{\theta})f(\boldsymbol{\theta}) d\boldsymbol{\theta}
+}$$
+
+-   Integral on the bottom is *normalization constant*.
+    -   Prior predictive probability of the observed data
+    -   Usually hard to calculate
+
+## MAP and EAP estimators
+
+-   Maximum *a posteriori* (MAP) Estimate
+
+$$\boldsymbol{\theta}^{*} = \text{argmax}_{\boldsymbol{\theta}} f(\boldsymbol{\theta} |\boldsymbol{Y})
+= \text{argmax}_{\boldsymbol{\theta}} f(\boldsymbol{Y}| \boldsymbol{\theta})f(\boldsymbol{\theta})
+$$
+
+-   Same as MLE if the prior is a uniform distribution.
+-   Expected *a posteriori* (EAP) estimate
+-   $$
+    \tilde{\boldsymbol{\theta}} = \int\!...\!\int 
+    \boldsymbol{\theta} \frac{1}{C}
+    f(\boldsymbol{Y}|\boldsymbol{\theta})f(\boldsymbol{\theta}) d\boldsymbol{\theta} = E_{\boldsymbol{\theta}|\boldsymbol{Y}}[\boldsymbol{\theta}]$$
+-   Need normalization constant $C$
+
+## Posterior SD versus Standard Error
+
+-   Posterior standard deviation plays the same role as standard error
+
+-   Bayesian statistics, using probability distribution to represent state of knowledge
+
+-   Classical statistics represents sampling uncertainty
+
+## Confidence versus Credibility Interval
+
+-   Classical *Confidence interval* go $z$ (usually 2) standard errors around MLE
+
+-   Represents uncertainty about where estimate could be under repeated samples.
+
+-   Bayesian *Credibility interval* go $z$ (usually 2) standard deviations from EAP.
+
+-   Can also take 2.5% and 97.5% percentiles of posterior
+
+-   Can interpret this as 95% probability that parameter is in interval.
+
+## Calculating the Normalization Constant
+
+-   Conjugate families – If likelihood and prior have certain functional forms, posterior has same form as prior, and integral can be done closed form.
+
+-   Various quadrature methods.
+
+-   Monte Carlo – random quadrature, sample from prior distribution.
+
+-   Markov Chain Monte Carlo
+
+-   Construct a Markov chain with transition probability $P(\boldsymbol{\theta}^{(r+1)}|\boldsymbol{\theta}^{(r)})$
+
+-   Choose the transition probability in such a way that the stationary distribution of the Markov chain is the posterior
+
+-   Gibbs sampling changes one parameter at a time.
+
+-   Metropolis–Hastings–Greene proposes new value and then accepts/rejects with certain probability.
+
+-   BUGS (OpenBUGS) & JAGS use random walk Metropolis
+
+-   Stan uses Hamiltonian Monte Carlo (No U-Turn Sampler)
+
+## Subjectivity, Objectivity and Transparency
+
+-   Bayesian posteriors (and priors) represent states of information
+
+-   Two people will have different states of information if they have examined different sets of evidence or made different assumptions
+
+-   Often critics point to choice of prior as being subjective, but so is the choice of likelihood
+
+-   More important that objectivity is *transparency*
+
+# Two Canonical Examples
+
+Conjugate distributions
+
+## Normal--Normal
+
+[Normal data with Normal Prior](NormalNormal.Rmd)
+
+## Beta--Binomial
+
+[Binomial data with beta prior](BetaBinomial.Rmd)
+
+## Strong and Weak Priors
+
+Strong priors have small variance (high precision)
+
+Weak priors have big variance (low precision)
+
+Small and large are defined wrt standard error of measurement
+
+## Non-informative Priors
+
+-   Normal distribution with infinite variance
+    -   Not proper (does not integrate to 1)
+        -   But is the limit of proper
+    -   Puts equal weight on plausible and implausible values
+-   Two choices for binomial
+    -   Uniform on [0,1] -- Beta(1,1)
+
+    -   Uniform on logit scale, -- Beta(.5,.5)
+
+    -   Maximum Likelihood -- Beta(0,0)
+
+## Strategies for picking priors
+
+-   Use a non-informative prior
+    -   Stan can work with improper priors
+    -   BUGS/JAGS require proper priors
+-   Use a very weak prior
+    -   Pick a parametric form
+    -   Normal with high variance/low precision
+-   Methods of moments
+    -   Pick a parameteric form
+    -   Set mean at most likely value
+    -   Set variance to cover all likely values with high probability
+-   Mean and Upper (lower) Bound
+    -   Pick a parameteric form
+    -   Pick a value for the mean/median and a quantile (e.g., 1%, 5%, 10%, 90%, 95%, 99%) representing effective upper/lower bound
+    -   Calculate parameters for distribution which matches
+-   Mean and Effective Sample Size
+    -   Pick a parametric form
+    -   Pick a mean
+    -   Pick a positive number $\tilde{N}$ so that prior is balanced by sample of size $N=\tilde{N}$.
+-   Spike and Slab
+    -   Prior is a mixture of two priors: one with small variance, one with large
+    -   Half-Cauchy prior
+
+# MCMC algorithm

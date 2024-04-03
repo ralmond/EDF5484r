@@ -1,5 +1,5 @@
 ---
-title: "Normal Normal Bayesian Model"
+title: "Beta Binomal Bayesian Model"
 author: "Russell Almond"
 date: "September 1, 2020"
 output: html_document
