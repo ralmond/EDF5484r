@@ -301,6 +301,7 @@ Use `C(var,base=n)` to set group `n` as reference.
 
 ```{r}
 ACED3 <- update(ACED2, .~.+C(Race,base=5))
+#ACED3 <- update(ACED2, .~.+Race)
 summary(ACED3)
 ```
 
@@ -350,7 +351,7 @@ summary(earnings)
 
 ```{r}
 highlight_key(earnings) %>%
-  GGally::ggpairs(columns=1:5) %>%
+  GGally::ggpairs(columns=c(3,1,5,6,4)) %>%
   ggplotly() %>%
   highlight("plotly_selected")
 ```
@@ -645,7 +646,7 @@ ggplot(ACEDextract,aes(x=pre_scaled,y=post_scaled,color=Cond_code)) +
 ```{r}
 ggplot(ACEDextract,aes(x=pre_scaled,y=post_scaled)) +
   geom_point()+geom_smooth(method="lm")+facet_wrap(vars(Cond_code))
-``` 
+```
 
 ```{r}
 names(ACEDextract)
@@ -667,10 +668,12 @@ names(ACEDex1)
 acedbase <- lm(acedminmod,ACEDex1)
 summary(acedbase)
 ```
+
 ```{r}
 acedati <- lm(post_scaled ~ Cond_code * pre_scaled, ACEDex1)
 summary(acedati)
 ```
+
 ```{r}
 anova(acedbase,acedati)
 ```
@@ -680,8 +683,6 @@ ACEDex1 %>% mutate(control=Cond_code=="control") -> ACEDex1
 acedcont <- lm(post_scaled ~ control + pre_scaled,ACEDex1)
 summary(acedcont)
 ```
-
-
 
 ## Fit the Initial Model
 
@@ -701,7 +702,6 @@ table(ACEDex1$Level_Code,ACEDex1$Race)
 library(effects)
 help("effects")
 ```
-
 
 ```{r}
 eff.aced <- allEffects(acedbase)
@@ -724,24 +724,23 @@ ggplot(effs,aes(x=condition,y=Estimate)) + geom_point() +
   geom_errorbar(aes(ymin=Estimate-2*`Std. Error`,ymax=Estimate+2*`Std. Error`)) +
   geom_hline(aes(yintercept=0))
 ```
+
 ```{r}
 coef(summary(acedfinal))
 ```
-
 
 ```{r}
 effs1 <- as.data.frame(coef(summary(acedfinal))[2:4,1:2])
 effs1$condition <- factor(c("adaptive_acc","adaptive_full","linear_full"))
 print(effs1,digit=3)
 ```
+
 ```{r}
 ggplot(effs1,aes(x=condition,y=Estimate)) + geom_point() +
   geom_errorbar(aes(ymin=Estimate-2*`Std. Error`,ymax=Estimate+2*`Std. Error`)) +
   geom_hline(aes(yintercept=0))
 
 ```
-
-
 
 # Job Satisfaction Data
 
