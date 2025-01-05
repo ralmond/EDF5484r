@@ -1,0 +1,54 @@
+---
+title: "EDF 5484, 9.3"
+format: html
+editor: visual
+---
+
+9.3 Uncertainty in the predicted expectation and the forecast: Consider the economy and voting example from Section 7.1. Fit the linear regression model to the data through 2012; these are available in the folder ElectionsEconomy.
+
+```{r}
+
+hibbs <- read.table("https://raw.githubusercontent.com/avehtari/ROS-Examples/master/ElectionsEconomy/data/hibbs.dat", header=TRUE)
+
+View(hibbs)
+
+library(rstanarm)
+M1 <- stan_glm(vote ~ growth, data=hibbs)
+print(M1)
+
+```
+
+(a) Make a forecast for the incumbent party’s share of the two-party vote in a future election where economic growth is 2%.
+
+```{r}
+new <- data.frame(growth=2.0)
+y_point_pred <- predict(M1, newdata=new)
+y_point_pred # predicted outcome is 52.38
+
+# If we calculate manually.... 
+a_hat <- coef(M1)[1]
+b_hat <- coef(M1)[2]
+y_point_pred <- a_hat + b_hat*2
+y_point_pred
+#We get thew same results
+```
+
+(b) Compute the point forecast, the standard deviation of the predicted expectation from (9.1), and the standard deviation of the predicted value from (9.2).
+
+```{r}
+pred <- predict(M1,newdata=new,se.fit=TRUE)
+sigma <- M1$stan_summary["sigma","mean"]
+## Expected Value Prediction Error
+pred$fit + qt(c(.05,.95),nrow(hibbs)-2)*pred$se.fit
+## Individual Prediction Year
+pred$fit + qt(c(.05,.95),nrow(hibbs)-2)*
+  sqrt(pred$se.fit^2+sigma^2)
+
+
+```
+
+(c) Now compute these using the relevant prediction functions discussed in Section 9.2. Check that you get the same values as in part (a) of this problem.
+
+```{r}
+
+```
