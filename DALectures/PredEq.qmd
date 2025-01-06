@@ -1,0 +1,51 @@
+---
+title: "Prediction Equations"
+format: 
+  beamer:
+    header-includes:
+     - \usepackage{annotate-equations}
+  html: 
+    html-math-method: 
+      method: katex
+      header-includes:
+        - \usepackage{annotate-equations}
+---
+
+## Mean Prediction Standard Error
+
+$$
+s_{\bar{y}_p} = \sqrt{
+\eqnmarkbox[green]{see}{s^2}
+\left [
+\eqnmarkbox[blue]{b0}{\frac{1}{n}} +
+\eqnmarkbox[purple]{b1}{\frac{(x_p - \bar{X})^2}{SS_{X}}}
+\right ]
+}
+$$ \annotate[yshift=-4em]{below,left}{see}{Residual standard deviation} \annotate[yshift=1em]{left}{b0}{Standard error of intercept} \annotate[yshift=1em]{right}{b1}{Standard error of slope}
+
+## Individual Prediction Standard Error
+
+$$
+s_{\hat{y}_p} = \sqrt{
+\eqnmarkbox[green]{see}{s^2}
+\left [
+\eqnmarkbox[blue]{b0}{\frac{1}{n}} +
+\eqnmarkbox[purple]{b1}{\frac{(x_p - \bar{X})^2}{SS_{X}}}+
+\eqnmarkbox[red]{e}{1}
+\right ]
+}
+$$ \annotate[yshift=-4em]{below,left}{see}{Residual standard deviation} \annotate[yshift=1em]{left}{b0}{Standard error of intercept} \annotate[yshift=1em]{right}{b1}{Standard error of slope} \annotate[yshift=-6em]{below,left}{e}{Standard deviation around the regression line}
+
+## Cook's distance
+
+-   $s^2$ -- residual standard deviation
+
+-   $p$ -- number of predictors
+
+-   $\widehat{y_j}$ -- predicted value for Observation $j$
+
+-   $\widehat{y_{j(i)}}$ -- predicted value for Observation $j$ when Observation $i$ is left out.
+
+$$ 
+D_i = \frac{\sum_{j \ne i} (\widehat{y_j}-\widehat{y_{j(i)}})^2}{ps^2} 
+$$
